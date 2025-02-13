@@ -1,0 +1,39 @@
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# proxy server
+env.json
+
+# build directories
+public
+dist
+dist-ssr
+
+# dependencies
+node_modules
+
+# python
+*.pyc
+__pycache__
+
+# system
+*.DS_Store
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# misc
+*.debug
+*.local

@@ -1,0 +1,10 @@
+{
+  "login": {
+    "DATA_INTEGRITY_ERROR": "Could not locate project in account.",
+    "NEEDS_SELECT_GROUP": "Select a group and try again.",
+    "AUTHORIZATION_FAILURE": "Incorrect username or password, please try again.",
+    "NO_GROUPS": "No groups found for this user.",
+    "AUTHENTICATION_GROUP_EXPIRED": "The group is expired. Please contact your facilitator.",
+    "UNKNOWN": "An unexpected error occurred. Please try again."
+  }
+}

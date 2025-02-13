@@ -1,0 +1,17 @@
+@use '../../constants' as *;
+
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  main {
+    overflow-y: auto;
+  }
+}
+
+.play {
+  display: grid;
+  grid-template-columns: 17.125rem 1fr;
+  height: 100%;
+  overflow: hidden;
+}

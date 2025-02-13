@@ -1,0 +1,75 @@
+@use '../../constants' as *;
+@use 'theme.scss';
+
+@keyframes subtle-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.react-aria-Button:not(.link-button) {
+  border-radius: $border-radius-small;
+  appearance: none;
+  vertical-align: middle;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0;
+  outline: none;
+  padding: 0.75rem;
+  text-decoration: none;
+  font-size: 1.125rem;
+  font-weight: $medium-font-weight;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 1px;
+  font-family: $font-family;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: -1px;
+  }
+
+  &[data-disabled] {
+    cursor: not-allowed;
+  }
+
+  &.primary {
+    color: $button-text-primary;
+    background: $button-background-primary;
+    border: 1px solid $button-border-primary;
+
+    &[data-disabled] {
+      border-color: $button-border-primary-disabled;
+      color: $button-text-primary-disabled;
+      background: $button-background-primary-disabled;
+    }
+  }
+
+  &.secondary {
+    color: $button-text-secondary;
+    background: $button-background-secondary;
+    border-color: $button-border-secondary;
+
+    &[data-disabled] {
+      color: $button-text-secondary-disabled;
+      background: $button-background-secondary-disabled;
+      border-color: $button-border-secondary-disabled;
+    }
+  }
+}
+
+.link-button {
+  cursor: pointer;
+  color: $text-primary;
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 1.125rem;
+  text-decoration: underline;
+  font-weight: $standard-font-weight;
+}

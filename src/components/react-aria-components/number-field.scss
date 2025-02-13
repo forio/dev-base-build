@@ -1,0 +1,7 @@
+@use '../../constants' as *;
+@use 'theme.scss';
+
+.react-aria-NumberField {
+  margin-bottom: 8px;
+  color: var(--text-color);
+}

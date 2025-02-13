@@ -1,0 +1,17 @@
+@use '../../constants' as *;
+
+footer {
+  width: 100%;
+  background-color: $white;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  font-size: 1rem;
+  a {
+      color: $text-primary;
+      text-decoration: none;
+      &.forio-link {
+          text-decoration: underline;
+      }
+  }
+}

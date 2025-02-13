@@ -1,0 +1,51 @@
+@use 'sass:color';
+@use '../../constants' as *;
+
+/* Semantic colors */
+:root {
+  --focus-ring-color: #{-webkit-focus-ring-color};
+  --text-color: #{$text-primary};
+  --text-color-base: #{$text-primary};
+  --text-color-hover: #{$text-primary};
+  --text-color-disabled: #{color.scale($text-primary, $alpha: -50%)};
+  --text-color-placeholder: #{$text-primary};
+  --border-color: #{$accent};
+  --border-color-hover: #{$accent};
+  --border-color-pressed: #{$accent};
+  --border-color-disabled: #{color.scale($gray, $alpha: -50%)};
+  --field-background: #{$white};
+  --field-text-color: #{$text-primary};
+  --highlight-background: #{$accent};
+}
+
+/* Windows high contrast mode overrides */
+@media (forced-colors: active) {
+  :root {
+    --background-color: Canvas;
+    --focus-ring-color: Highlight;
+    --text-color: ButtonText;
+    --text-color-base: ButtonText;
+    --text-color-hover: ButtonText;
+    --text-color-disabled: GrayText;
+    --text-color-placeholder: ButtonText;
+    --link-color: LinkText;
+    --link-color-secondary: LinkText;
+    --link-color-pressed: LinkText;
+    --border-color: ButtonBorder;
+    --border-color-hover: ButtonBorder;
+    --border-color-pressed: ButtonBorder;
+    --border-color-disabled: GrayText;
+    --field-background: Field;
+    --field-text-color: FieldText;
+    --overlay-background: Canvas;
+    --button-background: ButtonFace;
+    --button-background-pressed: ButtonFace;
+    --highlight-background: Highlight;
+    --highlight-background-pressed: Highlight;
+    --highlight-background-invalid: LinkText;
+    --highlight-foreground: HighlightText;
+    --highlight-foreground-pressed: HighlightText;
+    --invalid-color: LinkText;
+    --invalid-color-pressed: LinkText;
+  }
+}

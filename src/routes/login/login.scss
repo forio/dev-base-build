@@ -1,0 +1,76 @@
+@use '../../constants' as *;
+
+#login {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  
+  .login-wrapper {
+    flex: 1;
+    margin: auto;
+    margin-block: 3rem;
+    width: 100%;
+    max-width: 24rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 20rem;
+    gap: 3rem;
+    form {
+      width: 100%;
+      input, button {
+        width: 100%;
+      }
+    }
+    .react-aria-TextField {
+      width: 100%;
+    }
+    .login-error {
+      color: $red;
+      margin-block: 0.5rem;
+    }
+  }
+
+  
+}
+
+.login-select-group-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  table {
+    width: 100%;
+    tr td {
+      cursor: pointer;
+    }
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.password-reset {
+  background-color: $white;
+  border-radius: $border-radius-large;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2rem 0.5rem;
+  padding: 1rem;
+
+  input, p {
+    flex-grow: 3;
+    flex-basis: 100%;
+  }
+
+  button:first-of-type {
+    margin-left: auto;
+  }
+  p {
+    font-size: 1.125rem;
+    margin: 0;
+  }
+}

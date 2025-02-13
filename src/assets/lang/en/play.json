@@ -1,0 +1,33 @@
+{
+  "play": "Play",
+  "ROLES": {
+    "drill-blast": "Drill & Blast",
+    "trucks-loaders": "Trucks & Loaders",
+    "stockpile-process": "ROM Stockpile & Process Plant"
+  },
+  "how_to_play": "How To Play",
+  "role_information": "Role Information",
+  "value_chain_view": "Value Chain View",
+  "decisions": "Decisions",
+  "reports": "Reports",
+  "mine_stockpiles": "Mine Stockpiles",
+  "mine_stocks_sizes": "Mine Broken Stocks Sizes",
+  "mine_stocks_loader_queues": "Mine Broken Stocks Loader Queues",
+  "loaders_trucks": "Loaders and Trucks",
+  "number_trucks_loaders": "Number of Trucks and Loaders",
+  "drill_blast_throughput": "Drill and Blast Throughput",
+  "ore_inventory_throughput": "Ore Inventory Throughput",
+  "rom_stockpile": "ROM Stockpile",
+  "rom_stockpile_dumping_queues": "ROM Stockpile Dumping Queues",
+  "rom_stockpile_loader_queues": "ROM Stockpile Loader Queues",
+  "rom_stockpile_sizes": "ROM Stockpile Sizes",
+  "rom_stockpile_throughput": "ROM Stockpile Throughput",
+  "process_plant": "Process Plant",
+  "process_plant_crusher_queue": "Process Plant Crusher Queue",
+  "process_plant_ore_throughput": "Process Plant Ore Throughput",
+  "refinery_throughput": "Refinery Throughput",
+  "financial": "Financial Reports",
+  "cash_flow": "Cash Flow",
+  "30_year_projection": "30 Year Projection",
+  "new_run": "+ New Simulation Run"
+}
