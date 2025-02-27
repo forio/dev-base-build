@@ -5,6 +5,8 @@
 @use 'sass:color';
 
 .react-aria-ModalOverlay {
+  overflow-y: auto;
+  padding: 1rem;
   position: fixed;
   top: 0;
   left: 0;
@@ -27,6 +29,7 @@
 }
 
 .react-aria-Modal {
+  margin: auto;
   padding: 2rem;
   box-shadow: 0 8px 20px rgba(0 0 0 / 0.1);
   border-radius: 0.5rem;
