@@ -1,17 +1,14 @@
-@use '../../constants' as *;
-
 footer {
-  width: 100%;
-  background-color: $white;
+  padding: var(--space-1) var(--space-2);
   display: flex;
   justify-content: space-between;
-  padding: 1rem;
-  font-size: 1rem;
+  font-size: 0.8rem;
+  border-top: 1px solid var(--accent-11);
   a {
-      color: $text-primary;
-      text-decoration: none;
-      &.forio-link {
-          text-decoration: underline;
-      }
+    color: var(--color-text-primary);
+    text-decoration: none;
+    &.forio-link {
+      text-decoration: underline;
+    }
   }
 }

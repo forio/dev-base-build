@@ -1,53 +1,48 @@
-import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router-dom';
-import { Lang } from '../lang';
-import clsx from 'clsx';
+import { useIsFetching, useIsMutating } from '@tanstack/react-query';
+import { Lang } from '~/components/lang';
+import { Button } from '~/components/ui/button/button';
+import { useLogout } from '~/query/auth';
 import styles from './header.module.scss';
 
-type Route = {
-  path: string;
-  title: string;
-  className?: string;
-  children?: Route[];
+const useNetworkActive = () => {
+  const fetching = useIsFetching();
+  const mutating = useIsMutating();
+  return Boolean(fetching || mutating);
 };
 
-export const NavItem = ({ route }: { route: Route }) => {
-  const { title, className, path } = route;
-  const { t } = useTranslation();
-  const getNavLinkClass = ({ isActive }: { isActive: boolean }) => (
-    clsx(isActive && styles.active, className && `${styles[className]}`)
+const NetworkIndicator = () =>
+  useNetworkActive() ? (
+    <div className={styles.networkIndicator}>
+      <div className={styles.pingDot} />
+    </div>
+  ) : (
+    <div className={styles.dot} />
   );
 
-  return (
-    <li>
-      <NavLink
-        to={path}
-        data-content={t(title)}
-        className={getNavLinkClass}
-        {...route}
-      >
-        <Lang>{title}</Lang>
-      </NavLink>
-    </li>
-  );
-};
-
-export const Header = ({ routes }: { routes: Route[] }) => {
-  const { t } = useTranslation();
+export const Header = ({
+  children,
+  banner,
+}: {
+  children?: React.ReactNode;
+  banner?: React.ReactNode;
+}) => {
+  const { mutate: logout } = useLogout();
 
   return (
-    <header className={styles.header}>
-      <div className={styles.logo}>
-        <img src="https://forio.com/img/heros/forio-logo-blue.svg" alt={t('sim_title')} />
-        <Lang>sim_title</Lang>
+    <header>
+      <div className={styles.shell}>
+        <div className={styles.leftGroup}>
+          {import.meta.env.VITE_PROJECT_NAME}
+          <NetworkIndicator />
+        </div>
+        <nav className={styles.nav}>
+          {children}
+          <Button intent="ghost" size="sm" onClick={() => logout()}>
+            <Lang>logout</Lang>
+          </Button>
+        </nav>
       </div>
-      <nav aria-label={t('main')}>
-        <ul>
-          {routes.map((route) => (
-            <NavItem key={route.path} route={route} />
-          ))}
-        </ul>
-      </nav>
+      {banner}
     </header>
   );
 };

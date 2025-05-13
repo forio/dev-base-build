@@ -1,10 +1,6 @@
-import React from 'react';
-import {
-  isRouteErrorResponse,
-  Navigate,
-  useRouteError,
-} from 'react-router-dom';
 import { useAtomValue } from 'jotai';
+import React from 'react';
+import { isRouteErrorResponse, Navigate, useRouteError } from 'react-router';
 import { sessionAtom } from '~/query/auth';
 
 export class ErrorBoundary extends React.Component<
