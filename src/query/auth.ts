@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Fault, UserSession, Session, authAdapter, groupAdapter } from 'epicenter-libs';
-import { useNavigate } from 'react-router-dom';
+import { Fault, UserSession, authAdapter, groupAdapter } from 'epicenter-libs';
+import { atom, useAtomValue } from 'jotai';
+import { useNavigate } from 'react-router';
+import invariant from 'tiny-invariant';
 import { store } from '~/store';
-import { atom } from 'jotai';
 
 export const ADMIN_LOGIN_ERROR = 'ADMIN_LOGIN_ERROR';
 
@@ -19,7 +20,13 @@ export const sessionAtom = atom(
 );
 
 export const readSessionSync = () => store.get(sessionAtom);
-export const availableGroupsAtom = atom<Array<groupAdapter.Group>>([]);
+
+export const useGuardedSession = () => {
+  const session = useAtomValue(sessionAtom);
+  invariant(session, 'Requested session on un-guarded route.');
+  return session;
+};
+
 /* QUERIES */
 
 export const AuthQuery = {};
@@ -42,9 +49,7 @@ export const useLogin = () =>
         password,
         groupKey,
       });
-      if (session.objectType === 'admin') {
-        throw new Error(ADMIN_LOGIN_ERROR);
-      }
+      if (session.objectType === 'admin') throw new Error(ADMIN_LOGIN_ERROR);
       if (!session.groupKey && !session.multipleGroups) {
         throw new Fault({
           status: 401,
@@ -61,13 +66,9 @@ export const useLogin = () =>
           information: { code: 'NO_GROUPS' },
         });
       }
-      groups.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
       return [session, groups] as const;
     },
-    onSuccess: ([session, groups]) => {
-      store.set(sessionAtom, session);
-      if (groups) store.set(availableGroupsAtom, groups);
-    },
+    onSuccess: ([session]) => store.set(sessionAtom, session),
   });
 
 export const useLogout = (redirect = true) => {
@@ -85,31 +86,10 @@ export const useLogout = (redirect = true) => {
     onSettled: () => {
       queryClient.clear();
       store.set(sessionAtom, undefined);
-      store.set(availableGroupsAtom, []);
       if (redirect) navigate('/login');
     },
   });
 };
-
-
-let regeneratePromise: null | Promise<Session> = null; // one global promise
-export const useRegenerateSession = () =>
-  useMutation({
-    mutationFn: () => {
-      if (regeneratePromise) return regeneratePromise;
-      const session = readSessionSync();
-      if (!session?.groupKey) return Promise.reject();
-      regeneratePromise = authAdapter.regenerate(session.groupKey, {
-        inert: true,
-      });
-      return regeneratePromise;
-    },
-    onSuccess: (session) => {
-      regeneratePromise = null;
-      if (session.objectType === 'admin') throw new Error(ADMIN_LOGIN_ERROR);
-      store.set(sessionAtom, session);
-    },
-  });
 
 export const useResetPassword = () =>
   useMutation({

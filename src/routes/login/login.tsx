@@ -1,162 +1,151 @@
-import './login.scss';
-import { Fault } from 'epicenter-libs';
-import { useAtomValue } from 'jotai';
-import { FormEvent, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Fault, Group } from 'epicenter-libs';
+import { useState } from 'react';
+import invariant from 'tiny-invariant';
 import { Lang } from '~/components/lang';
-import { Button } from '~/components/react-aria-components/button';
-import { Form } from '~/components/react-aria-components/form';
-import { TextField } from '~/components/react-aria-components/text-field';
-import { Modal } from '~/components/react-aria-components/modal';
-import { Table, TableHeader, TableBody, Column, Row, Cell } from '~/components/react-aria-components/table';
-import { availableGroupsAtom, useLogin, useLogout } from '~/query/auth';
+import { Alert } from '~/components/ui/alert/alert';
+import { Button } from '~/components/ui/button/button';
+import { Card } from '~/components/ui/card/card';
+import { Input } from '~/components/ui/input/input';
+import { Label } from '~/components/ui/label/label';
+import { Table } from '~/components/ui/table/table';
+import { useLogin } from '~/query/auth';
+import styles from './login.module.scss';
 import { PasswordReset } from './password-reset';
-import type { Selection } from 'react-aria-components';
-import { Footer } from '~/components/footer/footer';
 
-export const Login = () => {
+export function Login() {
   const { mutateAsync: login } = useLogin();
-  const { mutateAsync: abort } = useLogout(false);
-  const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
 
-  const [errorCode, setErrorCode] = useState<string | undefined>(undefined);
-  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
-
-  const availableGroups = useAtomValue(availableGroupsAtom);
   const needsSelectGroup = availableGroups.length > 1;
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    setIsOpen(needsSelectGroup);
-  }, [needsSelectGroup]);
-
-  const columns = [
-    {
-      name: t('event'),
-      id: 'event',
-      isRowHeader: true,
-    },
-    {
-      name: t('organization'),
-      id: 'organization',
-    },
-    {
-      name: t('workshop_id'),
-      id: 'group_id',
-    },
-  ];
-
-  const rows = availableGroups.map((group) => ({
-    id: group.groupKey,
-    organization: group.organization,
-    event: group.event,
-    group_id: group.name,
-  } as { [key: string]: string }));
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const formData = new FormData(e.currentTarget);
+
     const handle = formData.get('handle');
     const password = formData.get('password');
-    const groupKey = Array.from(selectedKeys)[0] as string | undefined;
+    let groupKey = formData.get('groupKey');
 
-    if (typeof handle !== 'string' || typeof password !== 'string') return;
+    invariant(typeof handle === 'string' && typeof password === 'string');
 
-    return login({ handle, password, groupKey }).catch((error: Fault) => {
-      setErrorCode(error.code);
-    });
+    if (!handle.trim() || !password.trim()) return setError('REQUIRED_FIELD');
+    if (needsSelectGroup && !groupKey) return setError('NEEDS_SELECT_GROUP');
+    if (groupKey !== null) invariant(typeof groupKey === 'string');
+
+    return login({
+      handle,
+      password,
+      groupKey: groupKey ?? undefined,
+    })
+      .then(([, groups]) => {
+        setError(null);
+        if (groups) setAvailableGroups(groups);
+      })
+      .catch((error: Fault) => setError(error.code ?? 'GENERIC_ERROR'));
   };
 
-  const goBack = () => {
-    setIsOpen(false);
-    abort();
-    setSelectedKeys(new Set());
+  const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest<HTMLTableRowElement>('tr');
+    if (!row) return;
+    const radio = row.querySelector<HTMLInputElement>('input[type="radio"]');
+    if (!radio) return;
+    radio.click();
+    radio.focus();
   };
 
   return (
-    <div id="login">
-      <div className="login-wrapper">
-        <h1>
-          <Lang>login</Lang>
-        </h1>
-        <Form
-          onSubmit={handleSubmit}
-          id="login-form"
-        >
-          <TextField
-            name="handle"
-            type="text"
-            isRequired
-            label={t('handle')}
-            isReadOnly={needsSelectGroup}
-          />
-          <TextField
-            name="password"
-            type="password"
-            isRequired
-            label={t('password')}
-            isReadOnly={needsSelectGroup}
-          />
-          {errorCode && (
-            <p className="login-error">
-              {t(`login.${errorCode}`, { ns: 'error' })}
-            </p>
-          )}
-          <Button type="submit">
-            <Lang>login</Lang>
-          </Button>
-        </Form>
-        <PasswordReset />
+    <div className={styles.shell}>
+      <div className={styles.content}>
+        <Card className={styles.content}>
+          <form onSubmit={handleSubmit}>
+            <h1>
+              <Lang>login</Lang>
+            </h1>
+            <div className={styles.group}>
+              <Label>
+                <Lang>handle</Lang>
+                <Input name="handle" type="text" readOnly={needsSelectGroup} />
+              </Label>
+              <Label>
+                <Lang>password</Lang>
+                <Input name="password" type="password" readOnly={needsSelectGroup} />
+              </Label>
+            </div>
+            {needsSelectGroup && (
+              <Table compact striped hover>
+                <caption>
+                  <Lang>select_workshop</Lang>
+                </caption>
+                <thead>
+                  <tr>
+                    <th>{null}</th>
+                    <th>
+                      <Lang>event</Lang>
+                    </th>
+                    <th>
+                      <Lang>organization</Lang>
+                    </th>
+                    <th>
+                      <Lang>start_date</Lang>
+                    </th>
+                    <th>
+                      <Lang>workshop_id</Lang>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {availableGroups.map((group) => (
+                    <tr key={group.groupKey} onClick={handleRowClick}>
+                      <td>
+                        <VisuallyHidden>
+                          <input type="radio" name="groupKey" value={group.groupKey} />
+                        </VisuallyHidden>
+                      </td>
+                      <td>{group.event}</td>
+                      <td>{group.organization}</td>
+                      <td>{new Date(group.startDate!).toLocaleDateString()}</td>
+                      <td>{group.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+            {needsSelectGroup ? (
+              <div className={styles.finalize}>
+                <Button type="submit" intent="primary" size="md">
+                  <Lang>login</Lang>
+                </Button>
+                <Button
+                  type="button"
+                  intent="ghost"
+                  size="md"
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.currentTarget?.form?.reset();
+                    setAvailableGroups([]);
+                  }}
+                >
+                  <Lang>login_as_another_user</Lang>
+                </Button>
+              </div>
+            ) : (
+              <Button type="submit" intent="primary" size="md">
+                <Lang>login</Lang>
+              </Button>
+            )}
+            {error && (
+              <Alert variant="error">
+                <Lang ns="error" kp="login">
+                  {error}
+                </Lang>
+              </Alert>
+            )}
+          </form>
+          <PasswordReset />
+        </Card>
       </div>
-      <Footer />
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        className="login-select-group-modal"
-      >
-        <Table
-          selectionMode="single"
-          disallowEmptySelection
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
-          aria-label={t('select_workshop')}
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <Column isRowHeader={column.isRowHeader}>
-                {column.name}
-              </Column>
-            )}
-          </TableHeader>
-          <TableBody items={rows}>
-            {(row) => (
-              <Row columns={columns}>
-                {(column) => (
-                  <Cell>{row[column.id]}</Cell>
-                )}
-              </Row>
-            )}
-          </TableBody>
-        </Table>
-        <div className="buttons">
-        <Button
-            type="reset"
-            onPress={goBack}
-            secondary
-          >
-            <Lang>back</Lang>
-          </Button>
-          <Button
-            type="submit"
-            form="login-form"
-            isDisabled={Array.from(selectedKeys).length === 0}
-          >
-            <Lang>select_workshop</Lang>
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
-};
+}

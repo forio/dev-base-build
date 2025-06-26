@@ -1,0 +1,22 @@
+{
+  "variables": {
+    "Price": {
+      "save": true
+    },
+    "Revenue": {
+      "save": true
+    },
+    "Total_Costs": {
+      "save": true
+    },
+    "Profit": {
+      "save": true
+    },
+    "Step": {
+      "save": true
+    },
+    "Time": {
+      "save": true
+    }
+  }
+}

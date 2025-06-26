@@ -1,109 +1,115 @@
+import '@csstools/normalize.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DEFAULT_ERROR_HANDLERS, config } from 'epicenter-libs';
+import { config, errorManager } from 'epicenter-libs';
+import i18n from 'i18next';
 import { Provider as JotaiProvider } from 'jotai';
 import { createRoot } from 'react-dom/client';
 import { initReactI18next } from 'react-i18next';
-import { RouterProvider, createHashRouter } from 'react-router-dom';
-import { ErrorBoundary, RouteErrorBoundary } from './layouts/error-boundary';
-import { RedirectIfAuthed } from './layouts/redirect-if-authed';
-import { RequireFocusedAuth } from './layouts/require-focused-auth';
-import { TryRegenerate } from './layouts/try-regenerate';
-import { FacilitatorHome } from './routes/facilitator';
-import { Facilitator } from './routes/facilitator/facilitator';
-import { Login } from './routes/login/login';
-import { Logout } from './routes/logout/logout';
-import { PlayerHome } from './routes/play';
-import { Play } from './routes/play/play';
-import { store } from './store';
+import { RouterProvider, createHashRouter } from 'react-router';
 import resources from 'virtual:i18next-loader';
-import i18n from 'i18next';
-import '@csstools/normalize.css';
-import './index.scss';
+import { ErrorBoundary } from '~/layouts/error-boundary';
+import { RedirectIfAuthed } from '~/layouts/redirect-if-authed';
+import { RequireFocusedAuth } from '~/layouts/require-focused-auth';
+import {
+  awaitingLogoutAtom,
+  matchAttemptRegenerate,
+  matchUnrecoverableSession,
+  regenerateSession,
+} from '~/query/regenerate-session';
+import { FacilitatorShell } from '~/routes/facilitator/facilitator';
+import { Login } from '~/routes/login/login';
+import { Logout } from '~/routes/logout/logout';
+import { PlayerHome } from '~/routes/play/index';
+import { PlayerShell } from '~/routes/play/play';
+import { store } from '~/store';
+import '~/styles/global.scss';
 
 if (config.isLocal()) {
-  config.accountShortName = 'forio-dev';
-  config.projectShortName = 'PROJECT_GOES_HERE';
-  config.apiHost = 'epicenter-sandbox-1.forio.com';
+  config.accountShortName = import.meta.env.VITE_DEV_ACCOUNT_SHORT_NAME;
+  config.projectShortName = import.meta.env.VITE_DEV_PROJECT_SHORT_NAME;
+  config.apiHost = import.meta.env.VITE_DEV_API_HOST;
 }
 
-const queryClient = new QueryClient();
-
-Object.values(DEFAULT_ERROR_HANDLERS).forEach(({ unregister }) => unregister());
-const router = createHashRouter(
-  [
-    {
-      element: <RequireFocusedAuth />,
-      children: [
-        {
-          element: <TryRegenerate />,
-          children: [
-            {
-              path: '/',
-              element: <Play />,
-              children: [
-                {
-                  index: true,
-                  element: <PlayerHome />,
-                },
-                {
-                  path: '/*',
-                  element: null,
-                  errorElement: <RouteErrorBoundary />,
-                  loader: () => {
-                    throw new Response(`Not found`, { status: 404 })
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      element: <RequireFocusedAuth />,
-      children: [
-        {
-          element: <TryRegenerate />,
-          children: [
-            {
-              path: 'facilitator',
-              element: <Facilitator />,
-              children: [
-                {
-                  index: true,
-                  element: <FacilitatorHome />,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      element: <RedirectIfAuthed />,
-      children: [
-        {
-          path: '/login',
-          element: <Login />,
-          index: true,
-        },
-      ],
-    },
-    {
-      path: '/logout',
-      element: <Logout />,
-    },
-  ],
-  {
-    future: {
-      v7_relativeSplatPath: true,
-      v7_skipActionErrorRevalidation: true,
-      v7_fetcherPersist: true,
-      v7_normalizeFormMethod: true,
-      v7_partialHydration: true,
-    },
-  }
+errorManager.clearHandlers();
+errorManager.registerHandler(
+  (error) => error.code === 'COMETD_RECONNECTED',
+  async (_error) => console.warn('PUSH_RECONNECTED')
 );
+
+errorManager.registerHandler(matchAttemptRegenerate, (error, retry) => {
+  const awaitingLogout = store.get(awaitingLogoutAtom);
+  if (awaitingLogout) throw error;
+  return regenerateSession().then(retry);
+});
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry(failureCount, error) {
+        if (matchUnrecoverableSession(error)) return false;
+        return failureCount < 3;
+      },
+      throwOnError(error) {
+        return matchUnrecoverableSession(error);
+      },
+    },
+  },
+});
+
+const router = createHashRouter([
+  // load player code eagerly
+  {
+    element: <RequireFocusedAuth />,
+    errorElement: <PlayerShell.errorElement />,
+    children: [
+      {
+        path: '/',
+        element: <PlayerShell />,
+        children: [
+          {
+            index: true,
+            element: <PlayerHome />,
+          },
+        ],
+      },
+    ],
+  },
+  // load facilitator code lazily
+  {
+    element: <RequireFocusedAuth />,
+    errorElement: <FacilitatorShell.errorElement />,
+    children: [
+      {
+        path: '/facilitator',
+        element: <FacilitatorShell />,
+        children: [
+          {
+            index: true,
+            lazy: () =>
+              import('~/routes/facilitator/index/index').then((module) => ({
+                Component: module.Route,
+              })),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    element: <RedirectIfAuthed />,
+    children: [
+      {
+        path: '/login',
+        element: <Login />,
+        index: true,
+      },
+    ],
+  },
+  {
+    path: '/logout',
+    element: <Logout />,
+    loader: Logout.loader(queryClient),
+  },
+]);
 
 i18n.use(initReactI18next).init({
   resources,

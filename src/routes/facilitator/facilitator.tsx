@@ -1,42 +1,50 @@
-import { useAtomValue } from 'jotai';
-import { FC, Fragment, PropsWithChildren } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { sessionAtom } from '~/query/auth';
-import { Header } from '~/components/header/header';
+import { FC, PropsWithChildren } from 'react';
+import { Navigate, Outlet } from 'react-router';
+import { ErrorRoot } from '~/components/error/error';
 import { Footer } from '~/components/footer/footer';
+import { Header } from '~/components/header/header';
+import { useGuardedSession } from '~/query/auth';
+import styles from './facilitator.module.scss';
+
+const ErrorShell: FC<PropsWithChildren> = ({ children }) => (
+  <div className={styles.errorShell}>
+    <Header />
+    <div className={styles.contentWrapper}>
+      <div className={styles.innerContent}>{children}</div>
+    </div>
+    <Footer />
+  </div>
+);
 
 const Guard: FC<PropsWithChildren> = ({ children }) => {
-  const session = useAtomValue(sessionAtom);
-
-  if (!session)
-    throw new Error('Reached facilitator page without user session');
-  const { groupRole } = session;
-
-  if (groupRole === 'PARTICIPANT') return <Navigate to="/" />;
+  const session = useGuardedSession();
+  if (session.groupRole === 'PARTICIPANT') return <Navigate to="/" />;
   return children;
 };
-
-const routes = [{
-  path: '/logout',
-  title: 'logout',
-  className: 'logout',
-}];
 
 const Impl = () => {
   /**
    * work that persists across all facilitator pages
    */
   return (
-    <Fragment>
-      <Header routes={routes} />
-      <Outlet />
+    <div className={styles.shell}>
+      <Header />
+      <main className={styles.main}>
+        <Outlet />
+      </main>
       <Footer />
-    </Fragment>
+    </div>
   );
 };
 
-export const Facilitator = () => (
+export const FacilitatorShell = () => (
   <Guard>
     <Impl />
   </Guard>
+);
+
+FacilitatorShell.errorElement = () => (
+  <ErrorShell>
+    <ErrorRoot.Match />
+  </ErrorShell>
 );

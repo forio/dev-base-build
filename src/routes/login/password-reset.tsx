@@ -1,32 +1,22 @@
-import './login.scss';
 import { Fault } from 'epicenter-libs';
-import React, {
-  FC,
-  FormEvent,
-  PropsWithChildren,
-  useContext,
-  useState,
-} from 'react';
-import { useTranslation } from 'react-i18next';
-import { Fragment } from 'react/jsx-runtime';
+import React, { FC, FormEvent, PropsWithChildren, useContext, useState } from 'react';
+import invariant from 'tiny-invariant';
 import { Lang as GenericLang, LangProps } from '~/components/lang';
-import { Button } from '~/components/react-aria-components/button';
-import { Form } from '~/components/react-aria-components/form';
-import { Modal } from '~/components/react-aria-components/modal';
-import { TextField } from '~/components/react-aria-components/text-field';
+import { Button } from '~/components/ui/button/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog/dialog';
+import { Input } from '~/components/ui/input/input';
+import { Label } from '~/components/ui/label/label';
 import { useResetPassword } from '~/query/auth';
+import styles from './login.module.scss';
 
-const Lang: FC<LangProps> = (props) => (
-  <GenericLang {...props} ns="password-reset" />
-);
+const Lang: FC<LangProps> = (props) => <GenericLang {...props} ns="password-reset" />;
 
-enum FlowStep {
-  INITIAL = 'initial',
-  SUCCESS = 'success',
-  NO_ACCOUNT = 'no_account',
-  NO_EMAIL = 'no_email',
-  GENERIC_ERROR = 'generic_error',
-}
+type FlowStep = 'initial' | 'success' | 'no_account' | 'no_email' | 'generic_error';
 
 type FlowState = {
   step: FlowStep;
@@ -40,20 +30,15 @@ type FlowState = {
 const FlowContext = React.createContext({} as FlowState);
 const useFlowContext = () => useContext(FlowContext);
 
-const Provider: FC<PropsWithChildren<{ close: () => void }>> = ({
-  children,
-  close,
-}) => {
-  const [step, setStep] = useState(FlowStep.INITIAL);
+const Provider: FC<PropsWithChildren<{ close: () => void }>> = ({ children, close }) => {
+  const [step, setStep] = useState<FlowStep>('initial');
   const [handle, setHandle] = useState('');
   const restart = () => {
-    setStep(FlowStep.INITIAL);
+    setStep('initial');
     setHandle('');
   };
   return (
-    <FlowContext.Provider
-      value={{ step, setStep, handle, setHandle, restart, close }}
-    >
+    <FlowContext.Provider value={{ step, setStep, handle, setHandle, restart, close }}>
       {children}
     </FlowContext.Provider>
   );
@@ -61,65 +46,67 @@ const Provider: FC<PropsWithChildren<{ close: () => void }>> = ({
 
 const Initial = () => {
   const { close, handle, setHandle, setStep } = useFlowContext();
-  const { t } = useTranslation('password-reset');
 
   const { mutateAsync } = useResetPassword();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
     let handle = formData.get('handle');
-    if (typeof handle !== 'string') return;
+    invariant(typeof handle === 'string');
+
     handle = handle.trim();
 
     if (handle) {
       setHandle(handle);
       return mutateAsync(handle)
-        .then(() => setStep(FlowStep.SUCCESS))
+        .then(() => setStep('success'))
         .catch((error: Fault) => {
           switch (error.code) {
             case 'DATA_INTEGRITY_ERROR':
-              return setStep(FlowStep.NO_ACCOUNT);
+              return setStep('no_account');
             case 'NO_EMAIL':
-              return setStep(FlowStep.NO_EMAIL);
+              return setStep('no_email');
           }
-          setStep(FlowStep.GENERIC_ERROR);
+          setStep('generic_error');
         });
     }
   };
 
   return (
-    <Form className="password-reset" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <p>
         <Lang>initial</Lang>
       </p>
-      <TextField
-        name="handle"
-        type="text"
-        isRequired
-        label={t('handle')}
-        defaultValue={handle}
-      />
-      <Button secondary type="button" onPress={close}>
-        <Lang>cancel</Lang>
-      </Button>
-      <Button type="submit">
-        <Lang>reset</Lang>
-      </Button>
-    </Form>
+      <Label>
+        <Lang>handle</Lang>
+        <Input name="handle" type="text" required defaultValue={handle} />
+      </Label>
+      <div className={styles.buttons}>
+        <Button type="button" onClick={close} intent="secondary" size="sm">
+          <Lang>cancel</Lang>
+        </Button>
+        <Button type="submit" size="sm">
+          <Lang>reset</Lang>
+        </Button>
+      </div>
+    </form>
   );
 };
 
 const Success = () => {
   const { close } = useFlowContext();
   return (
-    <div className="password-reset">
+    <div>
       <p>
         <Lang>success</Lang>
       </p>
-      <Button type="button" onPress={close}>
-        <Lang>ok</Lang>
-      </Button>
+      <div className={styles.buttons}>
+        <Button type="button" onClick={close} size="sm">
+          <Lang>ok</Lang>
+        </Button>
+      </div>
     </div>
   );
 };
@@ -127,16 +114,18 @@ const Success = () => {
 const NoAccount = () => {
   const { close, handle, restart } = useFlowContext();
   return (
-    <div className="password-reset">
+    <div>
       <p>
         <Lang d={{ handle }}>no_account</Lang>
       </p>
-      <Button secondary type="button" onPress={close}>
-        <Lang>cancel</Lang>
-      </Button>
-      <Button type="button" onPress={restart}>
-        <Lang>try_again</Lang>
-      </Button>
+      <div className={styles.buttons}>
+        <Button type="button" onClick={close} intent="secondary" size="sm">
+          <Lang>cancel</Lang>
+        </Button>
+        <Button type="button" onClick={restart} size="sm">
+          <Lang>try_again</Lang>
+        </Button>
+      </div>
     </div>
   );
 };
@@ -144,13 +133,15 @@ const NoAccount = () => {
 const NoEmail = () => {
   const { close, handle } = useFlowContext();
   return (
-    <div className="password-reset">
+    <div>
       <p>
         <Lang d={{ handle }}>no_email</Lang>
       </p>
-      <Button type="button" onPress={close}>
-        <Lang>cancel</Lang>
-      </Button>
+      <div className={styles.buttons}>
+        <Button type="button" onClick={close} size="sm">
+          <Lang>cancel</Lang>
+        </Button>
+      </div>
     </div>
   );
 };
@@ -158,13 +149,15 @@ const NoEmail = () => {
 const GenericError = () => {
   const { close } = useFlowContext();
   return (
-    <div className="password-reset">
+    <div>
       <p>
         <Lang>generic_error</Lang>
       </p>
-      <Button type="button" onPress={close}>
-        <Lang>close</Lang>
-      </Button>
+      <div className={styles.buttons}>
+        <Button type="button" onClick={close} size="sm">
+          <Lang>close</Lang>
+        </Button>
+      </div>
     </div>
   );
 };
@@ -172,13 +165,13 @@ const GenericError = () => {
 const Switch = () => {
   const { step } = useFlowContext();
   switch (step) {
-    case FlowStep.SUCCESS:
+    case 'success':
       return <Success />;
-    case FlowStep.NO_ACCOUNT:
+    case 'no_account':
       return <NoAccount />;
-    case FlowStep.NO_EMAIL:
+    case 'no_email':
       return <NoEmail />;
-    case FlowStep.GENERIC_ERROR:
+    case 'generic_error':
       return <GenericError />;
     default:
       return <Initial />;
@@ -189,15 +182,20 @@ export const PasswordReset = () => {
   const [flowOpen, setFlowOpen] = useState(false);
   const close = () => setFlowOpen(false);
   return (
-    <Fragment>
-      <Button type="button" className="link-button" onPress={() => setFlowOpen(true)}>
-        <Lang>forgot_password</Lang>
-      </Button>
-      <Modal isOpen={flowOpen} onOpenChange={setFlowOpen}>
+    <Dialog open={flowOpen} onOpenChange={setFlowOpen}>
+      <DialogTrigger asChild>
+        <Button intent="ghost" size="sm">
+          <Lang>forgot_password?</Lang>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className={styles.passwordReset}>
+        <DialogTitle>
+          <Lang ns="password-reset">reset</Lang>
+        </DialogTitle>
         <Provider close={close}>
           <Switch />
         </Provider>
-      </Modal>
-    </Fragment>
+      </DialogContent>
+    </Dialog>
   );
 };
