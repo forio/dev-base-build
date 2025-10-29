@@ -68,9 +68,21 @@ const byEpisode = ({
   });
 };
 
-const RANGES = [] as const;
+const RANGES = [
+  'Time',
+  'Bike_Sales',
+  'Price',
+  'Revenue',
+  'Variable_Costs',
+  'Fixed_Costs',
+  'Total_Costs',
+  'Profit',
+  'Step',
+] as const;
 
-type Variables = {};
+type Variables = { Step: number } & {
+  [K in Exclude<(typeof RANGES)[number], 'Step'>]: number[];
+};
 
 const variables = ({ runKey = '' }: { runKey: string | undefined }) =>
   queryOptions({
