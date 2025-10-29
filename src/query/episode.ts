@@ -22,7 +22,6 @@ const current = ({ session }: { session: UserSession }) =>
       throw new Fault({ status: 404, message: 'No episode found' });
     },
     staleTime: Infinity,
-    enabled: Boolean(session.groupName),
     retry(failureCount, error) {
       if (error instanceof Fault && error.status === 404) return false;
       return failureCount < 3;
@@ -42,7 +41,6 @@ const list = ({ session }: { session: UserSession }) =>
         .query({ sort: ['-episode.created'] })
         .then((response) => response.values as Array<EpisodeReadOutView>),
     staleTime: Infinity,
-    enabled: Boolean(session.groupName),
   });
 
 export const EpisodeQuery = {

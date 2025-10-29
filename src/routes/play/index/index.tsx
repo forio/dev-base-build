@@ -10,7 +10,7 @@ export const PlayerHome = () => {
   const { data: run } = useSuspenseQuery(
     RunQuery.byUserPerEpisode({ session, episodeKey: episode.episodeKey })
   );
-  const { data: variables } = useSuspenseQuery(
+  const { data: _variables } = useSuspenseQuery(
     RunQuery.variables({
       runKey: run.runKey,
     })

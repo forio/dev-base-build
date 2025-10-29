@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import invariant from 'tiny-invariant';
 import { Button } from '~/components/ui/button/button';
 import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
-import { GroupQuery } from '~/query/group';
 import { RunQuery } from '~/query/run';
 import styles from './index.module.scss';
 
@@ -14,22 +13,24 @@ export const Route = () => {
 
   const { data: currentEpisode } = useSuspenseQuery(EpisodeQuery.current({ session }));
   const { data: episodes = [] } = useSuspenseQuery(EpisodeQuery.list({ session }));
-  const { data: members = [] } = useSuspenseQuery(GroupQuery.members({ session }));
 
   const [selectedEpisodeKey, setSelectedEpisodeKey] = useState(currentEpisode.episodeKey);
+  const selectedEpisode = episodes.find((ep) => ep.episodeKey === selectedEpisodeKey);
+  invariant(selectedEpisode, 'Selected episode not found in episode list');
 
-  const participants = useMemo(
-    () =>
-      new Map(
-        members
-          .filter((member) => member.role === 'participant')
-          .map((p) => [p.user.userKey, p])
-      ),
-    [members]
-  );
+  // const { data: members = [] } = useSuspenseQuery(GroupQuery.members({ session }));
+  // const participants = useMemo(
+  //   () =>
+  //     new Map(
+  //       members
+  //         .filter((member) => member.role === 'participant')
+  //         .map((p) => [p.user.userKey, p])
+  //     ),
+  //   [members]
+  // );
 
-  const { data: runs = [] } = useQuery(
-    RunQuery.byEpisode({ session, episodeKey: selectedEpisodeKey })
+  const { data: _runs = [] } = useQuery(
+    RunQuery.byEpisode({ session, episode: selectedEpisode })
   );
 
   const newEpisode = () =>

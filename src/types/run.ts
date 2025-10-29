@@ -1,9 +1,6 @@
 import { PseudonymReadOutView } from './user';
 
-export type RunReadOutView<
-  V extends Record<string, unknown> | undefined = undefined,
-  M extends Record<string, unknown> | undefined = undefined,
-> = {
+type BaseRunReadOutView = {
   cluster?: string;
   hidden?: boolean;
   modelVersion?: number;
@@ -11,14 +8,12 @@ export type RunReadOutView<
   modelLanguage?: string;
   perpetual?: boolean;
   cloud?: string;
-  metaData: M extends undefined ? Record<string, unknown> | undefined : M;
   grammar?: string;
   trackingKey?: string;
   scope: JPAScopeReadOutView;
   executionContext?: V1ExecutionContext;
   allowChannel?: boolean;
   marked?: boolean;
-  variables: V extends undefined ? Record<string, unknown> | undefined : V;
   address?: JPAAddressReadOutView;
   tombstone?: string;
   morphology?: string;
@@ -31,6 +26,14 @@ export type RunReadOutView<
   runState?: string;
   user?: PseudonymReadOutView;
 };
+
+// Helper to avoid distributive conditionals over naked type params:
+type IfSupplied<T, P> = [T] extends [undefined] ? Record<never, never> : P;
+
+export type RunReadOutView<
+  V extends Record<string, unknown> | undefined = undefined,
+  M extends Record<string, unknown> | undefined = undefined,
+> = BaseRunReadOutView & IfSupplied<V, { variables: V }> & IfSupplied<M, { metaData: M }>;
 
 type JPAScopeReadOutView = {
   scopeBoundary?: string;

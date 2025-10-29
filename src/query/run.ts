@@ -1,16 +1,17 @@
 import { queryOptions } from '@tanstack/react-query';
-import { runAdapter, SCOPE_BOUNDARY, UserSession } from 'epicenter-libs';
+import { Fault, runAdapter, SCOPE_BOUNDARY, UserSession } from 'epicenter-libs';
 import invariant from 'tiny-invariant';
+import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
 export const MODEL = 'model.xlsx';
 
 const byUserPerEpisode = ({
   session,
-  episodeKey = '',
+  episodeKey,
 }: {
   session: UserSession;
-  episodeKey: string | undefined;
+  episodeKey: string;
 }) =>
   queryOptions({
     queryKey: ['run', 'per-user', episodeKey, session.userKey],
@@ -32,49 +33,57 @@ const byUserPerEpisode = ({
       return runAdapter.create(MODEL, scope).then((run) => run as RunReadOutView);
     },
     staleTime: Infinity,
-    enabled: Boolean(session.userKey && episodeKey),
   });
+
+const byWorld = ({ worldKey }: { worldKey: string }) =>
+  queryOptions({
+    queryKey: ['run', 'byWorld', worldKey],
+    queryFn: () =>
+      runAdapter
+        .retrieveFromWorld(worldKey!, MODEL, { allowChannel: true })
+        .then((response) => response as unknown as RunReadOutView),
+    staleTime: Infinity,
+  });
+
+const RANGES = [] as const;
+type Variables = Record<string, unknown>;
 
 const byEpisode = ({
   session,
-  episodeKey = '',
+  episode,
 }: {
   session: UserSession;
-  episodeKey: string | undefined;
+  episode: EpisodeReadOutView;
 }) => {
+  const { groupRole, groupName } = session;
+
   invariant(
-    session.groupRole === 'FACILITATOR',
+    groupRole === 'FACILITATOR',
     'Only Facilitator should call RunQuery.byEpisode'
   );
 
-  const filters = ['run.hidden=false', 'run.userKey*=true'];
+  invariant(groupName, 'Reached authenticated route without session.groupName');
+
+  const filter = ['run.hidden=false', 'run.scopeBoundary='.concat(SCOPE_BOUNDARY.WORLD)];
   const variables = [...RANGES];
 
   return queryOptions({
-    queryKey: ['run', 'per-episode', episodeKey, filters, variables],
+    queryKey: ['run', 'per-episode', episode.episodeKey, filter, variables],
     queryFn: () =>
       runAdapter
         .query(MODEL, {
-          scope: {
-            scopeBoundary: SCOPE_BOUNDARY.EPISODE,
-            scopeKey: episodeKey,
-          },
-          filter: filters,
-          sort: ['+run.created'],
+          filter,
           variables,
+          groupName,
+          episodeName: episode.name,
         })
-        .then(({ values }) => values as Array<RunReadOutView<Variables>>),
-    enabled: Boolean(episodeKey),
+        .then((body) => body.values as unknown as Array<RunReadOutView<Variables>>),
   });
 };
 
-const RANGES = [] as const;
-
-type Variables = Record<string, unknown>;
-
-const variables = ({ runKey = '' }: { runKey: string | undefined }) =>
+const variables = ({ runKey }: { runKey: string }) =>
   queryOptions({
-    queryKey: ['variables', runKey],
+    queryKey: ['run', 'variables', runKey, ...RANGES],
     queryFn: () =>
       runAdapter
         .getVariables(runKey!, [...RANGES], { ritual: 'REVIVE' })
@@ -86,11 +95,34 @@ const variables = ({ runKey = '' }: { runKey: string | undefined }) =>
           return response;
         })
         .then((response) => response as Variables),
-    enabled: Boolean(runKey),
+  });
+
+const METADATA_KEYS = [] as const;
+type MetadataResponse = [];
+export type Metadata = Record<string, unknown>;
+
+const metadata = ({ runKey }: { runKey: string }) =>
+  queryOptions({
+    queryKey: ['run', 'metadata', runKey, ...METADATA_KEYS],
+    queryFn: () =>
+      runAdapter
+        .getMetadata(runKey!, [...METADATA_KEYS])
+        .catch((error) => {
+          if (error instanceof Fault && error.status === 410) return [];
+          throw error;
+        })
+        .then((response) => response as MetadataResponse)
+        .then(
+          (_values): Metadata => ({
+            /* ... */
+          })
+        ),
   });
 
 export const RunQuery = {
   byUserPerEpisode,
+  byWorld,
   byEpisode,
   variables,
+  metadata,
 };

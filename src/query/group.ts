@@ -16,7 +16,6 @@ const members = ({ session }: { session: UserSession }) =>
             (response.members ?? []) as unknown as Array<GroupPermissionReadOutView>
         );
     },
-    enabled: Boolean(session.groupKey),
   });
 
 export const GroupQuery = {
