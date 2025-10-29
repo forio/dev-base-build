@@ -1,5 +1,5 @@
 import { useAtomValue } from 'jotai';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router';
 import { sessionAtom } from '~/query/auth';
 
 export const RedirectIfAuthed = () => {
