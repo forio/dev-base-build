@@ -18,5 +18,19 @@
     "Time": {
       "save": true
     }
+  },
+  "protections": {
+    "guards": [
+      {
+        "privilege": {
+          "regex": "^creator$",
+          "domain": "variable",
+          "grant": "disallow",
+          "read": "PARTICIPANT",
+          "write": "PARTICIPANT",
+          "execute": "PARTICIPANT"
+        }
+      }
+    ]
   }
 }

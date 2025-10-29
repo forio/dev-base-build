@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { runAdapter } from 'epicenter-libs';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
 import invariant from 'tiny-invariant';
 import { Button } from '~/components/ui/button/button';
@@ -10,7 +10,8 @@ import { Label } from '~/components/ui/label/label';
 import { Table } from '~/components/ui/table/table';
 import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
-import { MODEL, RunQuery } from '~/query/run';
+import { RunQuery } from '~/query/run';
+import { WorldQuery } from '~/query/world';
 import { formatDollar, formatDollarSI } from '~/utils/formatter';
 import styles from './index.module.scss';
 
@@ -19,45 +20,73 @@ export const PlayerHome = () => {
   const session = useGuardedSession();
 
   const { data: episode } = useSuspenseQuery(EpisodeQuery.current({ session }));
+  const { data: world } = useSuspenseQuery(
+    WorldQuery.bySessionPerEpisode({ session, episode })
+  );
   const { data: run } = useSuspenseQuery(
-    RunQuery.byUserPerEpisode({ session, episodeKey: episode.episodeKey })
+    RunQuery.byWorld({
+      session,
+      worldKey: world?.worldKey,
+    })
   );
   const { data: variables } = useSuspenseQuery(
-    RunQuery.variables({
-      runKey: run.runKey,
-    })
+    RunQuery.variables({ runKey: run.runKey })
+  );
+
+  const { data: metadata, dataUpdatedAt: metadataUpdatedAt } = useSuspenseQuery(
+    RunQuery.metadata({ runKey: run.runKey })
   );
 
   const step = variables?.Step || 0;
 
-  const handleRestart = (e: React.FormEvent<HTMLFormElement>) => {
-    invariant(episode?.episodeKey);
-    invariant(run?.runKey);
-    e.preventDefault();
-    return runAdapter
-      .create(MODEL, {
-        scopeKey: episode.episodeKey,
-        scopeBoundary: 'EPISODE',
-        userKey: session.userKey,
-      })
+  const playAgain = () =>
+    runAdapter
+      .removeFromWorld(world.worldKey) // Requires `allowWorldReset: true` for project
       .then(() =>
         queryClient.invalidateQueries(
-          RunQuery.byUserPerEpisode({ session, episodeKey: episode.episodeKey })
+          RunQuery.byWorld({
+            session,
+            worldKey: world?.worldKey,
+          })
         )
       );
-  };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    invariant(run?.runKey);
-    e.preventDefault();
-    return runAdapter
-      .updateVariables(run.runKey, {
-        [`Price[0,${step}]`]: Number(e.currentTarget.price.value),
-      })
+  const setPrice = (step: number, price: number) =>
+    runAdapter.updateVariables(run.runKey, { [`Price[0,${step}]`]: price });
+
+  const claimEditorship = () =>
+    runAdapter
+      .updateMetadata(run.runKey, { set: { editor: session.userKey } })
+      .then(() =>
+        queryClient.invalidateQueries(RunQuery.metadata({ runKey: run.runKey }))
+      );
+
+  const stepModel = (priceDecision: number) =>
+    setPrice(step, priceDecision)
       .then(() => runAdapter.operation(run.runKey, 'step'))
       .then(() =>
         queryClient.invalidateQueries(RunQuery.variables({ runKey: run.runKey }))
       );
+
+  const handleSubmit = (
+    e: React.FormEvent<HTMLFormElement> & { nativeEvent: SubmitEvent }
+  ) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget, e.nativeEvent.submitter);
+    const intent = formData.get('intent');
+    invariant(typeof intent === 'string');
+
+    switch (intent) {
+      case 'submit': {
+        const price = formData.get('price');
+        invariant(typeof price === 'string');
+        return stepModel(Number(price));
+      }
+      case 'replay':
+        return playAgain();
+      default:
+        invariant(false, 'Unknown intent');
+    }
   };
 
   const chartData = useMemo(() => {
@@ -71,9 +100,27 @@ export const PlayerHome = () => {
     return data;
   }, [variables, step]);
 
-  if (!variables) return null;
-
   const isLastStep = step === variables.Time.length - 1;
+
+  const inputProps = (playerIsEditor: boolean) =>
+    playerIsEditor
+      ? {
+          defaultValue: variables.Price[step],
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+            e.target.value && setPrice(step, Number(e.target.value)),
+        }
+      : {
+          disabled: true,
+          value: variables.Price[step],
+        };
+
+  const editor = world.assignments.find(
+    (assignment) => assignment.user.userKey === metadata.editor
+  );
+  const playerIsEditor = editor?.user.userKey === session.userKey;
+  const editorName = metadata.editor
+    ? (editor?.user.displayName ?? 'Someone else')
+    : 'No one';
 
   return (
     <section className={styles.root}>
@@ -123,31 +170,60 @@ export const PlayerHome = () => {
             .reverse()}
         </tbody>
       </Table>
-      {isLastStep ? (
-        <form className={styles.resetForm} onSubmit={handleRestart}>
-          <h2>Play Again?</h2>
-          <Button type="submit" variant="primary" size="md">
-            Play Again
-          </Button>
+      <Card style={{ alignSelf: 'center' }}>
+        <form onSubmit={handleSubmit} className={styles.decisionForm}>
+          {isLastStep ? (
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              name="intent"
+              value="replay"
+            >
+              Play Again
+            </Button>
+          ) : (
+            <Fragment>
+              <h2>Set a price for {variables.Time[step]}</h2>
+              <Label>
+                Price
+                <Input
+                  key={metadataUpdatedAt}
+                  type="number"
+                  name="price"
+                  min="0.01"
+                  step="0.01"
+                  {...inputProps(playerIsEditor)}
+                />
+              </Label>
+              <div className={styles.submissionButtons}>
+                <Button
+                  type="button"
+                  onClick={claimEditorship}
+                  disabled={metadata.editor === session.userKey}
+                  variant="secondary"
+                >
+                  Become Editor
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  name="intent"
+                  value="submit"
+                  disabled={!playerIsEditor}
+                >
+                  Submit
+                </Button>
+                <p>
+                  {playerIsEditor
+                    ? 'You are the editor'
+                    : editorName.concat(' is the editor')}
+                </p>
+              </div>
+            </Fragment>
+          )}
         </form>
-      ) : (
-        <form className={styles.decisionForm} onSubmit={handleSubmit}>
-          <h2>Set a price for {variables.Time[step]}</h2>
-          <Label>
-            Price
-            <Input
-              type="number"
-              name="price"
-              min="0.01"
-              step="0.01"
-              defaultValue={variables.Price[step]}
-            />
-          </Label>
-          <Button type="submit" variant="primary" size="md">
-            Submit
-          </Button>
-        </form>
-      )}
+      </Card>
     </section>
   );
 };

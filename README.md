@@ -15,9 +15,16 @@ Set the following project settings in the Epicenter UI:
 - Push Channel: Enabled
 - Allow Channel Workshop Default: Enabled
 
+#### Project multiplayer settings
+
+- Multiplayer: Enabled
+- Role Name: Player; Minimum: 1; Maximum: No Max
+- On the Multiplayer Assignments page, start with assignments belonging to the: Most
+  Recent Run Configuration
+
 ### Deploy project files to Epicenter
 
-1. `npx degit forio/dev-base-build#example my-project`
+1. `npx degit forio/dev-base-build#become-editor my-project`
 2. `cd my-project`
 3. `npm install`
 4. `npm run deploy`
@@ -37,10 +44,14 @@ This is saved to `cli/config.json`, which you can edit later.
 
 ### Set up a workshop and user accounts
 
-Create a workshop for the project. Add at least one facilitator user and one participant
-to the workshop.
+Create a workshop for the project. Add at least one facilitator user and two or more
+participants to the workshop.
 
 On the workshop page, impersonate the facilitator to run initial setup tasks.
+
+### Set up Multiplayer Assignments
+
+On the Multiplayer Assignments page, assign participants to worlds.
 
 ### Run locally
 
@@ -56,4 +67,4 @@ Change the values in `.env` to match your project details:
 
 Start the development server with `npm run dev`. Visit the app at `http://localhost:8888`.
 
-Log in as the participant you created above and play the game!
+Log in as a participant you created above and play the game!

@@ -1,54 +1,51 @@
-import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import invariant from 'tiny-invariant';
-import { Button } from '~/components/ui/button/button';
 import { Table } from '~/components/ui/table/table';
 import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
-import { GroupQuery } from '~/query/group';
 import { RunQuery } from '~/query/run';
+import { WorldQuery } from '~/query/world';
 import { formatDollar } from '~/utils/formatter';
 import styles from './index.module.scss';
 
 export const Route = () => {
-  const queryClient = useQueryClient();
   const session = useGuardedSession();
 
   const { data: currentEpisode } = useSuspenseQuery(EpisodeQuery.current({ session }));
-  const { data: episodes = [] } = useSuspenseQuery(EpisodeQuery.list({ session }));
+  const { data: episodes } = useSuspenseQuery(EpisodeQuery.list({ session }));
 
   const [selectedEpisodeKey, setSelectedEpisodeKey] = useState(currentEpisode.episodeKey);
   const selectedEpisode = episodes.find((ep) => ep.episodeKey === selectedEpisodeKey);
   invariant(selectedEpisode, 'Selected episode not found in episode list');
 
-  const { data: members = [] } = useSuspenseQuery(GroupQuery.members({ session }));
-  const participants = useMemo(
-    () =>
-      new Map(
-        members
-          .filter((member) => member.role === 'participant')
-          .map((p) => [p.user.userKey, p])
-      ),
-    [members]
-  );
-
   const { data: runs = [] } = useQuery(
     RunQuery.byEpisode({ session, episode: selectedEpisode })
   );
 
-  const newEpisode = () =>
-    EpisodeQuery.push(session.groupName!).then(() =>
-      Promise.all([
-        queryClient.refetchQueries(EpisodeQuery.list({ session })),
-        queryClient.refetchQueries(EpisodeQuery.current({ session })),
-      ]).then(() => {
-        const current = queryClient.getQueryData(
-          EpisodeQuery.current({ session }).queryKey
-        );
-        invariant(current, 'Just created an episode but none found in cache');
-        setSelectedEpisodeKey(current.episodeKey);
-      })
-    );
+  const { data: worlds } = useSuspenseQuery(
+    WorldQuery.byEpisode({ session, episode: currentEpisode })
+  );
+
+  const worldsMap = useMemo(
+    () => new Map(worlds.map((world) => [world.worldKey, world])),
+    [worlds]
+  );
+
+  /* Manage both worlds and episodes through Epicenter UI */
+  // const newEpisode = () =>
+  //   EpisodeQuery.push(session.groupName!).then(() =>
+  //     Promise.all([
+  //       queryClient.refetchQueries(EpisodeQuery.list({ session })),
+  //       queryClient.refetchQueries(EpisodeQuery.current({ session })),
+  //     ]).then(() => {
+  //       const current = queryClient.getQueryData(
+  //         EpisodeQuery.current({ session }).queryKey
+  //       );
+  //       invariant(current, 'Just created an episode but none found in cache');
+  //       setSelectedEpisodeKey(current.episodeKey);
+  //     })
+  //   );
 
   return (
     <div className={styles.root}>
@@ -66,15 +63,12 @@ export const Route = () => {
             ))}
           </select>
         </label>
-        <Button size="sm" onClick={newEpisode}>
-          New Episode
-        </Button>
       </div>
       <div className={styles.data}>
         <Table striped compact numeric>
           <thead>
             <tr>
-              <th>Participant</th>
+              <th>Participants</th>
               <th>Run Created</th>
               <th>Year</th>
               <th>Revenue</th>
@@ -90,7 +84,12 @@ export const Route = () => {
               )
               .map((run) => (
                 <tr key={run.runKey}>
-                  <td>{participants.get(run.scope.userKey!)?.user.displayName}</td>
+                  <td>
+                    {worldsMap
+                      .get(run.scope.scopeKey!)
+                      ?.assignments.map((assignment) => assignment.user.displayName)
+                      .join(', ')}
+                  </td>
                   <td>{new Date(run.created).toLocaleDateString()}</td>
                   <td>{run.variables.Step}</td>
                   <td>{formatDollar(run.variables.Revenue[run.variables.Step])}</td>

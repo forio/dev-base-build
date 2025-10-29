@@ -9,16 +9,14 @@
   align-self: center;
 }
 
-.resetForm,
 .decisionForm {
   align-self: center;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  align-items: flex-start;
 
   h2 {
-    margin: 0 0 0.25rem;
+    margin: 0 0 var(--space-1);
     font-size: 1rem;
     font-weight: 600;
   }
@@ -26,11 +24,23 @@
   label {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    font-weight: 500;
+    gap: var(--space-1);
+    font-weight: var(--font-weight-medium);
   }
   button {
     align-self: stretch;
+  }
+
+  .submissionButtons {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    p {
+      grid-column: 1 / -1;
+      font-size: var(--font-size-1);
+      font-weight: var(--font-weight-medium);
+    }
   }
 }
 
