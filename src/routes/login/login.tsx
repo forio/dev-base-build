@@ -26,7 +26,7 @@ export function Login() {
 
     const handle = formData.get('handle');
     const password = formData.get('password');
-    let groupKey = formData.get('groupKey');
+    const groupKey = formData.get('groupKey');
 
     invariant(typeof handle === 'string' && typeof password === 'string');
 

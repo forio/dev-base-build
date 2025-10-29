@@ -27,7 +27,7 @@ const Impl = () => {
   return <Navigate to="/login" replace />;
 };
 
-export const Logout = ({}) => (
+export const Logout = () => (
   <Suspense
     fallback={
       <div id="logout">

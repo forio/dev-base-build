@@ -70,7 +70,7 @@ const byEpisode = ({
 
 const RANGES = [] as const;
 
-type Variables = {};
+type Variables = Record<string, unknown>;
 
 const variables = ({ runKey = '' }: { runKey: string | undefined }) =>
   queryOptions({
