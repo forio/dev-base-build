@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { UserSession, episodeAdapter } from 'epicenter-libs';
+import { Fault, UserSession, episodeAdapter } from 'epicenter-libs';
 import { EpisodeReadOutView } from '~/types/episode';
 
 const current = ({ session }: { session: UserSession }) =>
@@ -19,10 +19,14 @@ const current = ({ session }: { session: UserSession }) =>
           .create(episodeName, session.groupName!)
           .then((episode) => episode as unknown as EpisodeReadOutView);
       }
-      throw new Error('No episode found');
+      throw new Fault({ status: 404, message: 'No episode found' });
     },
     staleTime: Infinity,
     enabled: Boolean(session.groupName),
+    retry(failureCount, error) {
+      if (error instanceof Fault && error.status === 404) return false;
+      return failureCount < 3;
+    },
   });
 
 const push = (groupName: string) =>
