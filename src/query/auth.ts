@@ -83,6 +83,7 @@ export const useLogout = (redirect = true) => {
         .catch(() => null),
     onSettled: () => {
       queryClient.clear();
+      sessionStorage.clear();
       store.set(sessionAtom, undefined);
       if (redirect) navigate('/login');
     },

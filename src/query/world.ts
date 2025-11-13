@@ -11,13 +11,19 @@ const bySessionPerEpisode = ({
   episode: EpisodeReadOutView;
 }) =>
   queryOptions({
-    queryKey: ['world', 'bySessionPerEpisode', session.token, episode.episodeKey],
+    queryKey: [
+      'world',
+      'bySessionPerEpisode',
+      session.token,
+      session.groupName,
+      episode.name,
+    ],
     queryFn: () =>
       worldAdapter
         .get({
           mine: true,
           groupName: session.groupName,
-          episodeName: episode!.name,
+          episodeName: episode.name,
         })
         .then((response) => response as unknown as Array<WorldReadOutView>)
         .then(([mine]) => {
@@ -39,7 +45,7 @@ const byEpisode = ({
   episode: EpisodeReadOutView;
 }) =>
   queryOptions({
-    queryKey: ['world', 'byEpisode', session.token, episode.episodeKey],
+    queryKey: ['world', 'byEpisode', session.token, session.groupName, episode.name],
     queryFn: () =>
       worldAdapter
         .get({

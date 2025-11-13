@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
 import { FC, PropsWithChildren, Suspense, useCallback } from 'react';
 import { Outlet } from 'react-router';
-import invariant from 'tiny-invariant';
 import { ErrorRoot } from '~/components/error/error';
 import { Footer } from '~/components/footer/footer';
 import { Header } from '~/components/header/header';
@@ -26,13 +25,6 @@ const ErrorShell: FC<PropsWithChildren> = ({ children }) => (
 );
 
 const Guard: FC<PropsWithChildren> = ({ children }) => {
-  const session = useGuardedSession();
-  const { groupRole } = session;
-  // Remove invariant if other group roles may visit
-  invariant(
-    groupRole === 'PARTICIPANT',
-    'Reached participant view without participant session.'
-  );
   return children;
 };
 

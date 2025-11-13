@@ -57,7 +57,7 @@ function loadExistingConfig(): Partial<Config> {
       const content = fs.readFileSync(CONFIG_PATH, 'utf-8');
       return JSON.parse(content);
     }
-  } catch (error) {
+  } catch (_error) {
     console.warn('Warning: Could not read config.json, will prompt for all values');
   }
   return {};

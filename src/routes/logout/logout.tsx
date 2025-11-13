@@ -17,6 +17,7 @@ const loader = (queryClient: QueryClient) => async () => ({
     .catch(() => null)
     .then(() => {
       queryClient.clear();
+      sessionStorage.clear();
       store.set(sessionAtom, undefined);
     }),
 });

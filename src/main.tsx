@@ -23,6 +23,7 @@ import { PlayerHome } from '~/routes/play/index';
 import { PlayerShell } from '~/routes/play/play';
 import { store } from '~/store';
 import '~/styles/global.scss';
+import { readSessionSync } from './query/auth';
 
 if (config.isLocal()) {
   config.accountShortName = import.meta.env.VITE_DEV_ACCOUNT_SHORT_NAME;
@@ -55,6 +56,32 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const resolveInitialRoleHome = () => {
+  /**
+   * App may load with an existing session, particularly after impersonation.
+   * Redirect to the appropriate role home, but only once.
+   */
+  const key = 'initial-path-resolved';
+
+  const done = sessionStorage.getItem(key) === 'true';
+  if (done) return;
+  else {
+    const session = readSessionSync();
+    switch (session?.groupRole) {
+      case 'FACILITATOR': {
+        history.replaceState(null, '', '#/facilitator');
+        break;
+      }
+      case 'PARTICIPANT': // stay on index
+      default:
+        break;
+    }
+    sessionStorage.setItem(key, 'true');
+  }
+};
+
+resolveInitialRoleHome();
 
 const router = createHashRouter([
   // load player code eagerly

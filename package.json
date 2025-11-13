@@ -43,8 +43,6 @@
     "@types/prompts": "^2.4.9",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
     "@vitejs/plugin-react-swc": "^4.2.0",
     "archiver": "^7.0.1",
     "eslint": "^9.38.0",

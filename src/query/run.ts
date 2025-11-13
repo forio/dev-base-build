@@ -45,8 +45,21 @@ const byWorld = ({ worldKey }: { worldKey: string }) =>
     staleTime: Infinity,
   });
 
-const RANGES = [] as const;
-type Variables = Record<string, unknown>;
+const RANGES = [
+  'Time',
+  'Bike_Sales',
+  'Price',
+  'Revenue',
+  'Variable_Costs',
+  'Fixed_Costs',
+  'Total_Costs',
+  'Profit',
+  'Step',
+] as const;
+
+type Variables = { Step: number } & {
+  [K in Exclude<(typeof RANGES)[number], 'Step'>]: number[];
+};
 
 const byEpisode = ({
   session,
@@ -64,11 +77,11 @@ const byEpisode = ({
 
   invariant(groupName, 'Reached authenticated route without session.groupName');
 
-  const filter = ['run.hidden=false', 'run.scopeBoundary='.concat(SCOPE_BOUNDARY.WORLD)];
+  const filter = ['run.hidden=false'];
   const variables = [...RANGES];
 
   return queryOptions({
-    queryKey: ['run', 'per-episode', episode.episodeKey, filter, variables],
+    queryKey: ['run', 'per-episode', groupName, episode.name, filter, variables],
     queryFn: () =>
       runAdapter
         .query(MODEL, {
