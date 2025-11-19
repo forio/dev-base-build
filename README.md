@@ -18,13 +18,15 @@ Set the following project settings in the Epicenter UI:
 #### Project multiplayer settings
 
 - Multiplayer: Enabled
-- Role Name: Player; Minimum: 1; Maximum: No Max
+- Role Name: animals; Minimum: 1; Maximum: 1
+- Role Name: colors; Minimum: 1; Maximum: 1
+- Role Name: places; Minimum: 1; Maximum: 1
 - On the Multiplayer Assignments page, start with assignments belonging to the: Most
   Recent Run Configuration
 
 ### Deploy project files to Epicenter
 
-1. `npx degit forio/dev-base-build#become-editor my-project`
+1. `npx degit forio/dev-base-build#multiplayer-roles my-project`
 2. `cd my-project`
 3. `npm install`
 4. `npm run deploy`

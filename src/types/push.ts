@@ -1,14 +1,29 @@
-import { Metadata } from '~/query/run';
+import { Metadata, Variables } from '~/query/run';
+import { EpisodeReadOutView } from './episode';
 import { RunReadOutView } from './run';
 
-export type GroupChannelPush<C> = {
+export type BaseGroupChannelPush<C> = {
   date: string;
   address: {
     boundary: 'GROUP';
     category: 'GROUP';
     key: string;
   };
-} & C;
+  content: C;
+};
+
+export type GroupChannelPush = BaseGroupChannelPush<
+  | {
+      groupKey: string;
+      objectType: 'episode';
+      activity: 'create';
+      episode: EpisodeReadOutView;
+    }
+  | {
+      groupKey: string;
+      objectType: 'assignment';
+    }
+>;
 
 export type BaseWorldRunChannelPush<
   State,
@@ -34,21 +49,14 @@ export type BaseWorldRunChannelPush<
 
 export type WorldRunChannelPush = BaseWorldRunChannelPush<
   {
-    actions:
-      | [
-          {
-            objectType: 'set';
-            name: `Price[0,${number}]`;
-            value: number;
-          },
-        ]
-      | [
-          {
-            objectType: 'execute';
-            name: 'step';
-            arguments: [];
-          },
-        ];
+    actions: [
+      {
+        objectType: 'execute';
+        name: 'step' | 'contribute';
+        arguments: Array<unknown>;
+      },
+    ];
+    result: Array<Variables>;
   },
   { result: Metadata },
   {

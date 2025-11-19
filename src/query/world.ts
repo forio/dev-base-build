@@ -1,7 +1,9 @@
 import { queryOptions } from '@tanstack/react-query';
 import { Fault, UserSession, worldAdapter } from 'epicenter-libs';
 import { EpisodeReadOutView } from '~/types/episode';
-import { WorldReadOutView } from '~/types/world';
+import { AssignmentReadOutView, WorldReadOutView } from '~/types/world';
+
+export type AssignmentRole = 'animals' | 'colors' | 'places';
 
 const bySessionPerEpisode = ({
   session,
@@ -25,7 +27,12 @@ const bySessionPerEpisode = ({
           groupName: session.groupName,
           episodeName: episode.name,
         })
-        .then((response) => response as unknown as Array<WorldReadOutView>)
+        .then(
+          (response) =>
+            response as unknown as Array<
+              WorldReadOutView<AssignmentReadOutView<AssignmentRole>>
+            >
+        )
         .then(([mine]) => {
           if (!mine) throw new Fault({ status: 404, message: 'World not found' });
           return mine;
@@ -52,7 +59,12 @@ const byEpisode = ({
           groupName: session.groupName,
           episodeName: episode.name,
         })
-        .then((response) => response as unknown as Array<WorldReadOutView>),
+        .then(
+          (response) =>
+            response as unknown as Array<
+              WorldReadOutView<AssignmentReadOutView<AssignmentRole>>
+            >
+        ),
     staleTime: Infinity,
   });
 

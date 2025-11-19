@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
-export const MODEL = 'model.xlsx';
+export const MODEL = 'model.py';
 
 /* Unused in multiplayer */
 const byUserPerEpisode = ({
@@ -46,27 +46,19 @@ const byWorld = ({ session, worldKey }: { session: UserSession; worldKey: string
           executionContext: {
             version: 'V1',
             // @ts-expect-error type fixed 3.33.0
-            presets: { creator: session.userKey },
+            presets: { creator: `"${session.userKey}"` }, // EPICENTER-6493
           },
         })
         .then((response) => response as unknown as RunReadOutView),
     staleTime: Infinity,
   });
 
-const RANGES = [
-  'Time',
-  'Bike_Sales',
-  'Price',
-  'Revenue',
-  'Variable_Costs',
-  'Fixed_Costs',
-  'Total_Costs',
-  'Profit',
-  'Step',
-] as const;
+const RANGES = ['state'] as const;
 
-type Variables = { Step: number } & {
-  [K in Exclude<(typeof RANGES)[number], 'Step'>]: number[];
+export type Variables = {
+  animals: Array<string>;
+  colors: Array<string>;
+  places: Array<string>;
 };
 
 const byEpisode = ({
@@ -98,7 +90,9 @@ const byEpisode = ({
           groupName,
           episodeName: episode.name,
         })
-        .then((body) => body.values as unknown as Array<RunReadOutView<Variables>>),
+        .then(
+          (body) => body.values as unknown as Array<RunReadOutView<{ state: Variables }>>
+        ),
   });
 };
 
@@ -115,7 +109,7 @@ const variables = ({ runKey }: { runKey: string }) =>
           );
           return response;
         })
-        .then((response) => response as Variables),
+        .then((response) => response as { state: Variables }),
   });
 
 const METADATA_KEYS = ['editor'] as const;

@@ -6,7 +6,6 @@ import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
 import { RunQuery } from '~/query/run';
 import { WorldQuery } from '~/query/world';
-import { formatDollar } from '~/utils/formatter';
 import styles from './index.module.scss';
 
 export const Route = () => {
@@ -70,10 +69,9 @@ export const Route = () => {
             <tr>
               <th>Participants</th>
               <th>Run Created</th>
-              <th>Year</th>
-              <th>Revenue</th>
-              <th>Total Costs</th>
-              <th>Profit</th>
+              <th>Animals</th>
+              <th>Colors</th>
+              <th>Places</th>
             </tr>
           </thead>
           <tbody>
@@ -91,10 +89,9 @@ export const Route = () => {
                       .join(', ')}
                   </td>
                   <td>{new Date(run.created).toLocaleDateString()}</td>
-                  <td>{run.variables.Step}</td>
-                  <td>{formatDollar(run.variables.Revenue[run.variables.Step])}</td>
-                  <td>{formatDollar(run.variables.Total_Costs[run.variables.Step])}</td>
-                  <td>{formatDollar(run.variables.Profit[run.variables.Step])}</td>
+                  <td>{run.variables.state.animals.join(', ')}</td>
+                  <td>{run.variables.state.colors.join(', ')}</td>
+                  <td>{run.variables.state.places.join(', ')}</td>
                 </tr>
               ))}
           </tbody>

@@ -3,7 +3,6 @@ import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
 import { FC, Fragment, PropsWithChildren, Suspense, useCallback, useState } from 'react';
 import { Outlet } from 'react-router';
-import invariant from 'tiny-invariant';
 import { ErrorRoot } from '~/components/error/error';
 import { Footer } from '~/components/footer/footer';
 import { Header } from '~/components/header/header';
@@ -20,7 +19,6 @@ import { useChannel, useChannelEffect } from '~/query/channel';
 import { EpisodeQuery } from '~/query/episode';
 import { RunQuery } from '~/query/run';
 import { WorldQuery } from '~/query/world';
-import { EpisodeReadOutView } from '~/types/episode';
 import { GroupChannelPush, WorldRunChannelPush } from '~/types/push';
 import { Lang } from './lang';
 import styles from './play.module.scss';
@@ -62,45 +60,42 @@ const Main = () => {
   const runChannel = useChannel({
     pushCategory: PUSH_CATEGORY.RUN,
     scopeBoundary: SCOPE_BOUNDARY.WORLD,
-    scopeKey: world?.worldKey,
+    scopeKey: world.worldKey,
   });
 
   const onRunChannelPush = useCallback(
     (message: WorldRunChannelPush) => {
       switch (message.content.objectType) {
         case 'run': {
-          if (message.content.run.executionContext.presets.creator === session.userKey)
+          const quoted = (str: string) => `"${str}"`; // EPICENTER-6493
+          if (
+            message.content.run.executionContext.presets.creator ===
+            quoted(session.userKey)
+          )
             return;
           else return setNewRunDialogOpen(true);
         }
-        case 'meta':
-          return queryClient.setQueryData(
-            RunQuery.metadata({ runKey: message.content.runKey }).queryKey,
-            message.content.result
-          );
+        case 'meta': {
+          const { queryKey } = RunQuery.metadata({ runKey: message.content.runKey });
+          // set immediately ...
+          queryClient.setQueryData(queryKey, message.content.result);
+          // ... revalidate
+          return queryClient.invalidateQueries({ queryKey });
+        }
         case 'state': {
           const {
             runKey,
             actions: [action],
+            result: [variables],
           } = message.content;
           switch (action.objectType) {
-            case 'set': {
-              const cell = action.name.match(/Price\[0,(\d+)\]/);
-              invariant(cell, 'Invalid cell name in run channel message');
-              const step = Number(cell[1]);
-              const next = action.value;
-              return queryClient.setQueryData(
-                RunQuery.variables({ runKey }).queryKey,
-                (old) =>
-                  !old
-                    ? old
-                    : { ...old, Price: old.Price.map((v, i) => (i === step ? next : v)) }
-              );
+            case 'execute': {
+              const { queryKey } = RunQuery.variables({ runKey });
+              // set immediately ...
+              queryClient.setQueryData(queryKey, { state: variables });
+              // ... revalidate
+              return queryClient.invalidateQueries({ queryKey });
             }
-            case 'execute':
-              return queryClient.invalidateQueries(
-                RunQuery.variables({ runKey: message.content.runKey })
-              );
             default:
               console.warn('Unknown run channel message', message);
           }
@@ -170,20 +165,21 @@ const Layout = () => {
    * Set `project.allowChannelGroupDefault: true` to create groups with the flag on.
    */
   const onGroupChannelPush = useCallback(
-    (
-      message: GroupChannelPush<{
-        type: 'EPISODE';
-        content: {
-          activity: 'create';
-          episode: EpisodeReadOutView;
-          groupKey: string;
-          objectType: 'episode';
-        };
-      }>
-    ) => {
-      switch (message.content.activity) {
-        case 'create':
+    async (message: GroupChannelPush) => {
+      switch (message.content.objectType) {
+        case 'episode':
           return queryClient.invalidateQueries(EpisodeQuery.current({ session }));
+        case 'assignment': {
+          const episode = await queryClient.ensureQueryData(
+            EpisodeQuery.current({ session })
+          );
+          return queryClient.invalidateQueries(
+            WorldQuery.bySessionPerEpisode({
+              session,
+              episode,
+            })
+          );
+        }
         default:
           console.warn('Unknown group channel message', message);
       }
