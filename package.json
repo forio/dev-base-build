@@ -12,7 +12,8 @@
     "postinstall": "patch-package",
     "deploy:model": "tsx cli/deploy.ts model",
     "deploy:public": "tsx cli/deploy.ts public static",
-    "deploy": "npm-run-all build deploy:*"
+    "deploy": "npm-run-all build deploy:*",
+    "prepare": "husky"
   },
   "dependencies": {
     "@csstools/normalize.css": "^12.1.1",
@@ -24,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "epicenter-libs": "^3.32.0",
+    "husky": "^9.1.7",
     "i18next": "^25.6.0",
     "jotai": "^2.15.0",
     "lucide-react": "^0.548.0",
