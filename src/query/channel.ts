@@ -11,7 +11,7 @@ export const useChannel = ({
   pushCategory,
 }: {
   scopeBoundary: ChannelScope['scopeBoundary'];
-  scopeKey: ChannelScope['scopeKey'];
+  scopeKey: ChannelScope['scopeKey'] | undefined;
   pushCategory: ChannelScope['pushCategory'];
 }) =>
   useMemo(

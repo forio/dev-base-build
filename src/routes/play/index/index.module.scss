@@ -2,48 +2,127 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  align-items: center;
+  padding: var(--space-4);
 }
 
-.chart {
-  margin: var(--space-4) 0;
-  align-self: center;
+.roleList {
+  min-width: 65ch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  border: none;
+  padding: var(--space-3) 0;
+  margin: 0;
+  width: 100%;
+  max-width: 500px;
 }
 
-.decisionForm {
-  align-self: center;
+.hiddenRadio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roleCard {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  border-radius: 12px;
+  border: 2px solid;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+  min-height: 80px;
 
-  h2 {
-    margin: 0 0 var(--space-1);
-    font-size: 1rem;
-    font-weight: 600;
+  &:hover:not(.occupied) {
+    transform: scale(1.02);
   }
 
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    font-weight: var(--font-weight-medium);
-  }
-  button {
-    align-self: stretch;
-  }
-
-  .submissionButtons {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: var(--space-2);
-    margin-top: var(--space-2);
-    p {
-      grid-column: 1 / -1;
-      font-size: var(--font-size-1);
-      font-weight: var(--font-weight-medium);
-    }
+  &:active:not(.occupied) {
+    transform: scale(0.98);
   }
 }
 
-.resetForm {
+.available {
+  background-color: #fff;
+  border-color: #333;
+
+  &:hover {
+    border-color: #5b9bd5;
+  }
+
+  .roleName {
+    color: #333;
+  }
+}
+
+.mine {
+  background-color: #b4d4f1;
+  border-color: #5b9bd5;
+
+  .roleName {
+    color: #2e6da4;
+    font-weight: 600;
+  }
+}
+
+.occupied {
+  background-color: #fde9a9;
+  border-color: #e6a23c;
+  cursor: not-allowed;
+
+  .roleName {
+    color: #c97a1e;
+  }
+
+  .occupant {
+    color: #b8860b;
+  }
+}
+
+.roleName {
+  font-size: var(--font-size-2);
+  text-align: center;
+}
+
+.occupant {
+  font-size: var(--font-size-1);
+  font-style: italic;
+}
+
+.currentRole {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-1);
+  display: flex;
   align-items: center;
+  gap: var(--space-2);
+}
+
+.clearRole {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: #d32f2f;
+    color: #fff;
+  }
 }

@@ -1,14 +1,33 @@
 import { Metadata } from '~/query/run';
+import { EpisodeReadOutView } from './episode';
 import { RunReadOutView } from './run';
+import { WorldReadOutView } from './world';
 
-export type GroupChannelPush<C> = {
+export type GroupChannelPush<
+  Episode = {
+    activity: 'create';
+    episode: EpisodeReadOutView;
+  },
+  Assignment = {
+    worlds: WorldReadOutView[];
+  },
+> = {
   date: string;
   address: {
     boundary: 'GROUP';
     category: 'GROUP';
     key: string;
   };
-} & C;
+} & (
+  | {
+      type: 'EPISODE';
+      content: { groupKey: string; objectType: 'episode' } & Episode;
+    }
+  | {
+      type: 'ASSIGNMENT';
+      content: { groupKey: string; objectType: 'assignment' } & Assignment;
+    }
+);
 
 export type BaseWorldRunChannelPush<
   State,
@@ -61,3 +80,17 @@ export type WorldRunChannelPush = BaseWorldRunChannelPush<
     };
   }
 >;
+
+export type WorldChannelPush = {
+  date: string;
+  address: {
+    boundary: 'WORLD';
+    category: 'WORLD';
+    key: string;
+  };
+  content: {
+    type: 'world';
+    subType: 'assignchange';
+    data: Record<string, unknown>;
+  };
+};

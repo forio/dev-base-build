@@ -13,7 +13,7 @@ export const matchAttemptRegenerate = (() => {
 export const awaitingLogoutAtom = atom(false);
 
 let regeneratePromise: null | Promise<Session> = null; // one global promise
-export const regenerateSession = () => {
+export const regenerateSession = async () => {
   if (regeneratePromise) return regeneratePromise;
   const session = readSessionSync();
   if (!session?.groupKey) return Promise.reject();
@@ -25,6 +25,7 @@ export const regenerateSession = () => {
       regeneratePromise = null;
       if (session.objectType === 'admin') throw new Error(ADMIN_LOGIN_ERROR);
       store.set(sessionAtom, session);
+      return session;
     })
     .catch((error) => {
       console.error(error);

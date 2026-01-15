@@ -1,5 +1,9 @@
 # Forio Base Build
 
+This example demonstrates **dynamic participant self-assignment** within a multiplayer
+simulation. Participants select their own roles from available options, with real-time
+push notifications keeping all clients synchronized when assignments change.
+
 ## Quickstart
 
 ### Create a project
@@ -14,17 +18,33 @@ Set the following project settings in the Epicenter UI:
 - Web Access: Allow access to all URLs by default
 - Push Channel: Enabled
 - Allow Channel Workshop Default: Enabled
+- Allow World Self-Assignment: Enabled
 
 #### Project multiplayer settings
 
 - Multiplayer: Enabled
-- Role Name: Player; Minimum: 1; Maximum: No Max
 - On the Multiplayer Assignments page, start with assignments belonging to the: Most
   Recent Run Configuration
 
+##### Roles
+
+Define the following roles in project multiplayer settings:
+
+| Role Name  | Minimum | Maximum | Auto-Assign Objective          |
+| ---------- | ------- | ------- | ------------------------------ |
+| Chair      | 0       | 1       | 0                              |
+| Vice Chair | 0       | 1       | 0                              |
+| Secretary  | 0       | 1       | 0                              |
+| Treasurer  | 0       | 1       | 0                              |
+| Waiting    | 0       | No Max  | 4 [sum of other role maximums] |
+
+The `Waiting` is a holding role for participants who have not yet selected a role. It is
+filtered out of the role selection UI. During auto-assign, prefer `Waiting` so that
+players can choose their role.
+
 ### Deploy project files to Epicenter
 
-1. `npx degit forio/dev-base-build#become-editor my-project`
+1. `npx degit forio/dev-base-build#multiplayer-dynamic-self-assign my-project`
 2. `cd my-project`
 3. `npm install`
 4. `npm run deploy`
