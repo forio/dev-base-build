@@ -1,17 +1,45 @@
-@use '../../constants' as *;
-
-.root {
+.shell {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  main {
-    overflow-y: auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.main {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.errorShell {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  .contentWrapper {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .innerContent {
+    margin-top: -1.5rem;
+    display: flex;
+    max-width: 65ch;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    text-wrap: balance;
   }
 }
 
-.play {
-  display: grid;
-  grid-template-columns: 17.125rem 1fr;
+.loading {
   height: 100%;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  > * {
+    transform: translateY(-50%);
+  }
 }

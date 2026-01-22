@@ -9,6 +9,9 @@ lerna-debug.log*
 # proxy server
 env.json
 
+# deployment config
+cli/config.json
+
 # build directories
 public
 dist
