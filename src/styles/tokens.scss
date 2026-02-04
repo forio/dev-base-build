@@ -4,10 +4,14 @@
 @import '@radix-ui/colors/blue.css';
 @import '@radix-ui/colors/red.css';
 @import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/cyan.css';
+@import '@radix-ui/colors/amber.css';
 @import '@radix-ui/colors/gray.css';
 @import '@radix-ui/colors/blue-alpha.css';
 @import '@radix-ui/colors/red-alpha.css';
 @import '@radix-ui/colors/green-alpha.css';
+@import '@radix-ui/colors/cyan-alpha.css';
+@import '@radix-ui/colors/amber-alpha.css';
 
 :root {
   /* Accent colors (blue) */
@@ -23,6 +27,49 @@
   --accent-10: var(--blue-10);
   --accent-11: var(--blue-11);
   --accent-12: var(--blue-12);
+
+  /* Role colors */
+  --role-sales-1: var(--blue-1);
+  --role-sales-2: var(--blue-2);
+  --role-sales-3: var(--blue-3);
+  --role-sales-4: var(--blue-4);
+  --role-sales-5: var(--blue-5);
+  --role-sales-6: var(--blue-6);
+  --role-sales-7: var(--blue-7);
+  --role-sales-8: var(--blue-8);
+  --role-sales-9: var(--blue-9);
+  --role-sales-10: var(--blue-10);
+  --role-sales-11: var(--blue-11);
+  --role-sales-12: var(--blue-12);
+  --role-sales-a4: var(--blue-a4);
+
+  --role-operations-1: var(--cyan-1);
+  --role-operations-2: var(--cyan-2);
+  --role-operations-3: var(--cyan-3);
+  --role-operations-4: var(--cyan-4);
+  --role-operations-5: var(--cyan-5);
+  --role-operations-6: var(--cyan-6);
+  --role-operations-7: var(--cyan-7);
+  --role-operations-8: var(--cyan-8);
+  --role-operations-9: var(--cyan-9);
+  --role-operations-10: var(--cyan-10);
+  --role-operations-11: var(--cyan-11);
+  --role-operations-12: var(--cyan-12);
+  --role-operations-a4: var(--cyan-a4);
+
+  --role-finance-1: var(--amber-1);
+  --role-finance-2: var(--amber-2);
+  --role-finance-3: var(--amber-3);
+  --role-finance-4: var(--amber-4);
+  --role-finance-5: var(--amber-5);
+  --role-finance-6: var(--amber-6);
+  --role-finance-7: var(--amber-7);
+  --role-finance-8: var(--amber-8);
+  --role-finance-9: var(--amber-9);
+  --role-finance-10: var(--amber-10);
+  --role-finance-11: var(--amber-11);
+  --role-finance-12: var(--amber-12);
+  --role-finance-a4: var(--amber-a4);
 
   /* Accent alpha (blue-alpha) */
   --accent-a1: var(--blue-a1);
@@ -137,7 +184,9 @@
   --elevation-2: 0 4px 6px rgba(0, 0, 0, 0.1);
 
   /* Typography */
-  --font-body: sans-serif;
+  --font-display: Georgia, serif;
+  --font-body: system-ui, sans-serif;
+  --font-mono: monospace;
   --font-weight-standard: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;

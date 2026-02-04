@@ -1,5 +1,6 @@
 {
   "play": "Play",
+  "getting_ready": "Preparing your decision board...",
   "new_run": {
     "dialog_title": "A New Run Has Been Started",
     "dialog_body": "Click Join to join your team in the new run.",

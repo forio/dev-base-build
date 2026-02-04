@@ -1,10 +1,13 @@
 import { queryOptions } from '@tanstack/react-query';
 import { Fault, runAdapter, SCOPE_BOUNDARY, UserSession } from 'epicenter-libs';
 import invariant from 'tiny-invariant';
+import * as z from 'zod';
+import { ModelVariablesSchema, ROLE_SCHEMAS } from '~/schemas/model';
+import type { Role } from '~/schemas/world';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
-export const MODEL = 'model.py';
+export const MODEL = 'model.xlsx';
 
 /* Unused in multiplayer */
 const byUserPerEpisode = ({
@@ -53,14 +56,6 @@ const byWorld = ({ session, worldKey }: { session: UserSession; worldKey: string
     staleTime: Infinity,
   });
 
-const RANGES = ['state'] as const;
-
-export type Variables = {
-  animals: Array<string>;
-  colors: Array<string>;
-  places: Array<string>;
-};
-
 const byEpisode = ({
   session,
   episode,
@@ -78,39 +73,48 @@ const byEpisode = ({
   invariant(groupName, 'Reached authenticated route without session.groupName');
 
   const filter = ['run.hidden=false'];
-  const variables = [...RANGES];
+  const variableKeys = Object.keys(ModelVariablesSchema.shape);
 
   return queryOptions({
-    queryKey: ['run', 'per-episode', groupName, episode.name, filter, variables],
+    queryKey: ['run', 'per-episode', groupName, episode.name, filter, variableKeys],
     queryFn: () =>
       runAdapter
         .query(MODEL, {
           filter,
-          variables,
+          variables: variableKeys,
           groupName,
           episodeName: episode.name,
         })
         .then(
-          (body) => body.values as unknown as Array<RunReadOutView<{ state: Variables }>>
+          (body) =>
+            body.values as unknown as Array<
+              RunReadOutView<z.infer<typeof ModelVariablesSchema>>
+            >
         ),
   });
 };
 
-const variables = ({ runKey }: { runKey: string }) =>
-  queryOptions({
-    queryKey: ['run', 'variables', runKey, ...RANGES],
+// Generic variables query - infers return type from schema
+const variables = <S extends z.ZodObject<z.ZodRawShape>>({
+  runKey,
+  schema,
+}: {
+  runKey: string;
+  schema: S;
+}) => {
+  const keys = Object.keys(schema.shape);
+  return queryOptions({
+    queryKey: [runKey, { invalidateOnStep: true }, 'run', 'variables', ...keys],
     queryFn: () =>
       runAdapter
-        .getVariables(runKey!, [...RANGES], { ritual: 'REVIVE' })
-        .then((response) => {
-          invariant(
-            !Array.isArray(response),
-            'Fetched multiple runs when only one was expected.'
-          );
-          return response;
-        })
-        .then((response) => response as { state: Variables }),
+        .getVariables(runKey, keys, { ritual: 'REVIVE' })
+        .then((data) => schema.parse(data) as z.infer<S>),
   });
+};
+
+// Convenience query for role-based access
+const variablesByRole = ({ runKey, role }: { runKey: string; role: Role }) =>
+  variables({ runKey, schema: ROLE_SCHEMAS[role] });
 
 const METADATA_KEYS = ['editor'] as const;
 type MetadataResponse = [
@@ -139,5 +143,6 @@ export const RunQuery = {
   byWorld,
   byEpisode,
   variables,
+  variablesByRole,
   metadata,
 };

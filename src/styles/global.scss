@@ -5,12 +5,27 @@ body {
   font-family: var(--font-body);
   background: var(--color-background);
   color: var(--color-text-primary);
+  line-height: 1.5;
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body,
+input,
+button,
+select,
+textarea {
+  font-family: var(--font-body);
 }
 
 h1,

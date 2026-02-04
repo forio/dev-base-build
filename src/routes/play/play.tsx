@@ -1,7 +1,14 @@
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
-import { FC, Fragment, PropsWithChildren, Suspense, useCallback, useState } from 'react';
+import { PUSH_CATEGORY, runAdapter, SCOPE_BOUNDARY } from 'epicenter-libs';
+import {
+  FC,
+  Fragment,
+  PropsWithChildren,
+  Suspense,
+  useCallback,
+  useState,
+} from 'react';
 import { Outlet } from 'react-router';
 import { ErrorRoot } from '~/components/error/error';
 import { Footer } from '~/components/footer/footer';
@@ -35,6 +42,53 @@ const ErrorShell: FC<PropsWithChildren> = ({ children }) => (
 
 const Guard: FC<PropsWithChildren> = ({ children }) => {
   return children;
+};
+
+const Debug = () => {
+  const queryClient = useQueryClient();
+  const session = useGuardedSession();
+  const { data: episode } = useSuspenseQuery(EpisodeQuery.current({ session }));
+  const { data: world } = useSuspenseQuery(
+    WorldQuery.bySessionPerEpisode({ session, episode })
+  );
+  const { data: run } = useSuspenseQuery(
+    RunQuery.byWorld({ session, worldKey: world.worldKey })
+  );
+
+  const step = (delta: number) =>
+    runAdapter
+      .action(run.runKey, [{ objectType: 'execute', name: 'step', arguments: [delta] }])
+      .then(() =>
+        queryClient.invalidateQueries({
+          queryKey: [run.runKey, { invalidateOnStep: true }],
+        })
+      );
+
+  return (
+    <div className={styles.debug}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() =>
+          runAdapter
+            .removeFromWorld(world.worldKey)
+            .then(() =>
+              queryClient.invalidateQueries(
+                RunQuery.byWorld({ session, worldKey: world.worldKey })
+              )
+            )
+        }
+      >
+        New run
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => step(-1)}>
+        Step -1
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => step(1)}>
+        Step +1
+      </Button>
+    </div>
+  );
 };
 
 const Loading = () => (
@@ -86,16 +140,12 @@ const Main = () => {
           const {
             runKey,
             actions: [action],
-            result: [variables],
           } = message.content;
           switch (action.objectType) {
-            case 'execute': {
-              const { queryKey } = RunQuery.variables({ runKey });
-              // set immediately ...
-              queryClient.setQueryData(queryKey, { state: variables });
-              // ... revalidate
-              return queryClient.invalidateQueries({ queryKey });
-            }
+            case 'execute':
+              return queryClient.invalidateQueries({
+                queryKey: [runKey, { invalidateOnStep: true }],
+              });
             default:
               console.warn('Unknown run channel message', message);
           }
@@ -109,6 +159,22 @@ const Main = () => {
     token: session.token,
     channel: runChannel,
     callback: onRunChannelPush,
+  });
+
+  const consensusChannel = useChannel({
+    scopeBoundary: SCOPE_BOUNDARY.WORLD,
+    scopeKey: world.worldKey,
+    pushCategory: PUSH_CATEGORY.CONSENSUS,
+  });
+
+  const onConsensusPush = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['consensus', world.worldKey] });
+  }, [queryClient, world.worldKey]);
+
+  useChannelEffect({
+    token: session.token,
+    channel: consensusChannel,
+    callback: onConsensusPush,
   });
 
   return (
@@ -195,7 +261,11 @@ const Layout = () => {
 
   return (
     <div className={styles.shell}>
-      <Header />
+      <Header>
+        <Suspense fallback={null}>
+          <Debug />
+        </Suspense>
+      </Header>
       <main className={styles.main}>
         <Suspense fallback={<Loading />}>
           <Main />

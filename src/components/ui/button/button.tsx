@@ -9,6 +9,7 @@ const buttonVariants = cva(styles.base, {
       primary: styles.primary,
       secondary: styles.secondary,
       ghost: styles.ghost,
+      role: styles.role,
     },
     size: {
       sm: styles.sm,

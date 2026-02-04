@@ -1,26 +1,28 @@
 {
-  "language": "python3",
-  "restorations": {
-    "assembly": [
-      {
-        "snapshot": {
-          "variables": [
-            "state"
-          ]
-        }
-      }
-    ]
-  },
   "protections": {
     "guards": [
       {
-        "privilege": {
-          "regex": "^creator$",
+        "role": {
+          "regex": "^(Price|Demand)(\\[.*\\])?$",
           "domain": "variable",
-          "grant": "disallow",
-          "read": "PARTICIPANT",
-          "write": "PARTICIPANT",
-          "execute": "PARTICIPANT"
+          "grant": "allow",
+          "role": "Sales"
+        }
+      },
+      {
+        "role": {
+          "regex": "^(Capacity|Variable_Cost)(\\[.*\\])?$",
+          "domain": "variable",
+          "grant": "allow",
+          "role": "Operations"
+        }
+      },
+      {
+        "role": {
+          "regex": "^Fixed_Costs(\\[.*\\])?$",
+          "domain": "variable",
+          "grant": "allow",
+          "role": "Finance"
         }
       }
     ]

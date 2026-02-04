@@ -65,6 +65,23 @@
   background: rgba(5, 91, 157, 0.08);
 }
 
+.role {
+  --button-background-primary: var(--role-9, var(--accent-9));
+  --button-background-primary-hover: var(--role-10, var(--accent-10));
+  --button-border-primary: var(--role-9, var(--accent-9));
+  --button-text-primary: var(--surface-1);
+
+  background: var(--button-background-primary);
+  color: var(--button-text-primary);
+  border: 1px solid var(--button-border-primary);
+}
+
+.role:hover:not(:disabled) {
+  background: var(--button-background-primary-hover);
+  color: var(--button-text-primary);
+  border-color: var(--button-background-primary-hover);
+}
+
 .sm {
   padding: var(--space-2) var(--space-3);
   font-size: 0.875rem;

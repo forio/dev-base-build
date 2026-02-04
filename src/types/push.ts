@@ -1,4 +1,4 @@
-import { Metadata, Variables } from '~/query/run';
+import { Metadata } from '~/query/run';
 import { EpisodeReadOutView } from './episode';
 import { RunReadOutView } from './run';
 
@@ -52,11 +52,10 @@ export type WorldRunChannelPush = BaseWorldRunChannelPush<
     actions: [
       {
         objectType: 'execute';
-        name: 'step' | 'contribute';
+        name: 'step';
         arguments: Array<unknown>;
       },
     ];
-    result: Array<Variables>;
   },
   { result: Metadata },
   {

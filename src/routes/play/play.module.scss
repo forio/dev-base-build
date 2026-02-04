@@ -6,8 +6,8 @@
 
 .main {
   height: 100%;
-  overflow-y: hidden;
-  display: flex;
+  overflow-y: auto;
+  display: block;
 }
 
 .errorShell {
@@ -44,4 +44,12 @@
   > * {
     transform: translateY(-50%);
   }
+}
+
+.debug {
+  display: flex;
+  gap: 0.75rem;
+  margin-right: 2rem;
+  padding-right: 2rem;
+  border-right: 1px solid #d1d5db;
 }

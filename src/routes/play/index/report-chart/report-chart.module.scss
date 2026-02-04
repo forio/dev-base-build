@@ -1,0 +1,197 @@
+/* ─────────────────────────────────────────────────
+   Chart Card Container
+───────────────────────────────────────────────── */
+
+.chartCard {
+  background: var(--surface-1);
+  border-radius: var(--radius-large);
+  padding: var(--space-5);
+  border: 1px solid var(--surface-4);
+  box-shadow: var(--elevation-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ─────────────────────────────────────────────────
+   Tab Navigation
+───────────────────────────────────────────────── */
+
+.tabBar {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-2);
+  border-radius: var(--radius-small);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  color: var(--surface-9);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab:hover:not(.tabActive) {
+  background: var(--surface-3);
+  color: var(--surface-11);
+}
+
+.tabActive {
+  background: var(--surface-1);
+  color: var(--surface-12);
+  box-shadow: var(--elevation-1);
+}
+
+/* ─────────────────────────────────────────────────
+   Card Header
+───────────────────────────────────────────────── */
+
+.cardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cardHeader h3 {
+  font-size: var(--font-size-5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--surface-12);
+}
+
+.cardEyebrow {
+  font-size: var(--font-size-1);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--surface-9);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cardMeta {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2);
+  color: var(--surface-9);
+}
+
+/* ─────────────────────────────────────────────────
+   Chart Container
+───────────────────────────────────────────────── */
+
+.chartContainer {
+  background: var(--surface-1);
+  border-radius: var(--radius-large);
+  padding: var(--space-4);
+  border: 1px solid var(--surface-4);
+  flex: 1;
+  min-height: 320px;
+}
+
+.chartContainer :global(.recharts-cartesian-grid-horizontal line),
+.chartContainer :global(.recharts-cartesian-grid-vertical line) {
+  stroke: var(--surface-4);
+}
+
+.chartContainer :global(.recharts-tooltip-wrapper .recharts-default-tooltip) {
+  background: var(--surface-12) !important;
+  border: none !important;
+  border-radius: var(--radius-small);
+  box-shadow: var(--elevation-2);
+}
+
+.chartContainer :global(.recharts-tooltip-label) {
+  color: var(--surface-1);
+  font-family: var(--font-mono);
+}
+
+.chartContainer :global(.recharts-cartesian-axis-tick text) {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  fill: var(--surface-9);
+}
+
+/* ─────────────────────────────────────────────────
+   Custom Tooltip
+───────────────────────────────────────────────── */
+
+.customTooltip {
+  background: var(--surface-12);
+  color: var(--surface-1);
+  border-radius: var(--radius-small);
+  padding: var(--space-3);
+  box-shadow: var(--elevation-2);
+  font-family: var(--font-mono);
+  min-width: 160px;
+}
+
+.tooltipLabel {
+  font-size: var(--font-size-1);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--surface-6);
+  margin-bottom: var(--space-2);
+}
+
+.tooltipList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.tooltipItem {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-1);
+}
+
+.tooltipSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.tooltipName {
+  font-weight: var(--font-weight-medium);
+}
+
+.tooltipValue {
+  color: var(--surface-2);
+}
+
+/* ─────────────────────────────────────────────────
+   Custom Legend
+───────────────────────────────────────────────── */
+
+.chartLegend {
+  list-style: none;
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-2);
+}
+
+.chartLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+}
+
+.chartLegendLine {
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+}

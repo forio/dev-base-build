@@ -6,7 +6,18 @@ import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
 import { RunQuery } from '~/query/run';
 import { WorldQuery } from '~/query/world';
+import { formatDollar } from '~/utils/formatter';
 import styles from './index.module.scss';
+
+const toStepIndex = (value: number | number[] | undefined) => {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === 'number' && Number.isFinite(raw)
+    ? Math.max(0, Math.floor(raw))
+    : 0;
+};
+
+const formatMoney = (value?: number | null) =>
+  typeof value === 'number' && !Number.isNaN(value) ? formatDollar(value) : '—';
 
 export const Route = () => {
   const session = useGuardedSession();
@@ -69,9 +80,9 @@ export const Route = () => {
             <tr>
               <th>Participants</th>
               <th>Run Created</th>
-              <th>Animals</th>
-              <th>Colors</th>
-              <th>Places</th>
+              <th>Step</th>
+              <th>Decision Year</th>
+              <th>Report Profit</th>
             </tr>
           </thead>
           <tbody>
@@ -89,9 +100,16 @@ export const Route = () => {
                       .join(', ')}
                   </td>
                   <td>{new Date(run.created).toLocaleDateString()}</td>
-                  <td>{run.variables.state.animals.join(', ')}</td>
-                  <td>{run.variables.state.colors.join(', ')}</td>
-                  <td>{run.variables.state.places.join(', ')}</td>
+                  <td>{toStepIndex(run.variables.Step)}</td>
+                  <td>
+                    {run.variables.Time?.[toStepIndex(run.variables.Step)] ??
+                      toStepIndex(run.variables.Step) + 1}
+                  </td>
+                  <td>
+                    {formatMoney(
+                      run.variables.Report_Profit?.[toStepIndex(run.variables.Step)]
+                    )}
+                  </td>
                 </tr>
               ))}
           </tbody>
