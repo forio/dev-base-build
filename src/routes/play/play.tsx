@@ -1,6 +1,6 @@
-import { QueryClient, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { chatAdapter, PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
-import { FC, PropsWithChildren, Suspense, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
+import { FC, PropsWithChildren, Suspense, useCallback } from 'react';
 import { Outlet } from 'react-router';
 import { ErrorRoot } from '~/components/error/error';
 import { Footer } from '~/components/footer/footer';
@@ -8,12 +8,9 @@ import { Header } from '~/components/header/header';
 import { Card } from '~/components/ui/card/card';
 import { useGuardedSession } from '~/query/auth';
 import { useChannel, useChannelEffect } from '~/query/channel';
-import { ChatQuery } from '~/query/chat';
 import { EpisodeQuery } from '~/query/episode';
-import { WorldQuery } from '~/query/world';
-import { ChatMessage } from '~/types/chat';
 import { EpisodeReadOutView } from '~/types/episode';
-import { ChatChannelPush, GroupChannelPush } from '~/types/push';
+import { GroupChannelPush } from '~/types/push';
 import { Lang } from './lang';
 import styles from './play.module.scss';
 
@@ -41,62 +38,9 @@ const Loading = () => (
   </div>
 );
 
-const onChatPushImpl =
-  (queryClient: QueryClient) =>
-  (session: ReturnType<typeof useGuardedSession>) =>
-  async (data: ChatChannelPush) => {
-    const { queryKey } = ChatQuery.messages({ chatKey: data.content.chatKey });
-    const { chatMessage } = data.content;
-    if (chatMessage.senderKey !== session.userKey) {
-      switch (data.type) {
-        case 'BROADCAST': {
-          queryClient.setQueryData(queryKey, (prev: ChatMessage[] | undefined) => {
-            if (!prev) return prev;
-            if (prev.some((m) => m.id === chatMessage.id)) return prev;
-            return [
-              {
-                ...chatMessage,
-                receiverKey: chatMessage.receiverKey || null,
-              },
-              ...prev,
-            ];
-          });
-          break;
-        }
-        case 'TARGETED': {
-          try {
-            const fetched = await chatAdapter
-              .getMessages(data.content.chatKey, {
-                horizon: chatMessage.id,
-                maxRecords: 1,
-              })
-              .then((response) => response as unknown as ChatMessage[])
-              .then(([msg]) => msg);
-            if (fetched) {
-              queryClient.setQueryData(queryKey, (prev: ChatMessage[] | undefined) => {
-                if (!prev) return prev;
-                if (prev.some((m) => m.id === fetched.id)) return prev;
-                return [fetched, ...prev];
-              });
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      }
-    }
-
-    return queryClient.invalidateQueries({ queryKey });
-  };
-
 const Impl = () => {
   const session = useGuardedSession();
   const queryClient = useQueryClient();
-
-  const { data: episode } = useSuspenseQuery(EpisodeQuery.current({ session }));
-  const { data: world } = useSuspenseQuery(
-    WorldQuery.bySessionPerEpisode({ session, episode })
-  );
 
   const groupChannel = useChannel({
     scopeBoundary: SCOPE_BOUNDARY.GROUP,
@@ -134,35 +78,6 @@ const Impl = () => {
     token: session.token,
     channel: groupChannel,
     callback: onGroupChannelPush,
-  });
-
-  const episodeChatChannel = useChannel({
-    scopeBoundary: SCOPE_BOUNDARY.EPISODE,
-    scopeKey: episode.episodeKey,
-    pushCategory: PUSH_CATEGORY.CHAT,
-  });
-
-  const worldChatChannel = useChannel({
-    scopeBoundary: SCOPE_BOUNDARY.WORLD,
-    scopeKey: world.worldKey,
-    pushCategory: PUSH_CATEGORY.CHAT,
-  });
-
-  const onChatPush = useMemo(
-    () => onChatPushImpl(queryClient)(session),
-    [queryClient, session]
-  );
-
-  useChannelEffect({
-    token: session.token,
-    channel: episodeChatChannel,
-    callback: onChatPush,
-  });
-
-  useChannelEffect({
-    token: session.token,
-    channel: worldChatChannel,
-    callback: onChatPush,
   });
 
   return (

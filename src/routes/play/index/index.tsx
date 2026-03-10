@@ -62,11 +62,33 @@ export const PlayerHome = () => {
     return list;
   }, [episode.episodeKey, world, run, participants, session.userKey]);
 
+  const chatStateScope = useMemo(
+    () =>
+      [
+        session.userKey,
+        session.groupKey ?? 'no-group',
+        episode.episodeKey,
+        world.worldKey,
+        run?.runKey ?? 'no-run',
+      ].join(':'),
+    [
+      session.userKey,
+      session.groupKey,
+      episode.episodeKey,
+      world.worldKey,
+      run?.runKey,
+    ]
+  );
+
   return (
     <ChatLayout
       conversations={conversations}
       currentUserKey={session.userKey}
       members={participants}
+      token={session.token}
+      episodeKey={episode.episodeKey}
+      worldKey={world.worldKey}
+      chatStateScope={chatStateScope}
     />
   );
 };

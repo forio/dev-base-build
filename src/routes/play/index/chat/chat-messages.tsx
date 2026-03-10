@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { chatAdapter } from 'epicenter-libs';
+import { useSetAtom } from 'jotai';
 import { FC, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '~/components/ui/button/button';
 import { Input } from '~/components/ui/input/input';
 import { ChatQuery } from '~/query/chat';
 import { GroupPermissionReadOutView } from '~/types/group';
 import { Lang } from '../../lang';
+import { clearChatRoomUnreadAtom } from './chat-state';
 import { Conversation } from './types';
 import styles from './chat-messages.module.scss';
 
@@ -31,6 +33,7 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
   members,
 }) => {
   const queryClient = useQueryClient();
+  const clearChatRoomUnread = useSetAtom(clearChatRoomUnreadAtom);
   const [text, setText] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +65,10 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length]);
+
+  useEffect(() => {
+    clearChatRoomUnread(conversation.room);
+  }, [conversation.room, clearChatRoomUnread]);
 
   const sendMutation = useMutation({
     mutationFn: (message: string) =>
