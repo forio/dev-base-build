@@ -1,5 +1,31 @@
 import { RunReadOutView } from './run';
 
+export type ChatChannelPush = {
+  date: string;
+  type: 'BROADCAST' | 'TARGETED';
+  address: {
+    boundary: 'EPISODE' | 'WORLD';
+    category: 'CHAT';
+    key: string;
+  };
+  sender: {
+    type: string;
+    key: string;
+  };
+  content: {
+    chatKey: string;
+    room: string;
+    objectType: 'broadcast' | 'targeted';
+    chatMessage: {
+      senderKey: string;
+      created: number;
+      id: number;
+      message: string;
+      receiverKey?: string;
+    };
+  };
+};
+
 export type GroupChannelPush<C> = {
   date: string;
   address: {

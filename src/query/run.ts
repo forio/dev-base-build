@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
-export const MODEL = 'model.xlsx';
+export const MODEL = 'model.py';
 
 const byUserPerEpisode = ({
   session,

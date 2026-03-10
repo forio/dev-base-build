@@ -1,3 +1,13 @@
 {
-  "play": "Play"
+  "play": "Play",
+  "chat": {
+    "channels": "Channels",
+    "episode_chat": "Episode Chat",
+    "world_chat": "World Chat",
+    "run_chat": "Run Chat",
+    "type_message": "Type a message…",
+    "send": "Send",
+    "no_messages": "No messages yet. Start the conversation!",
+    "direct_messages": "Direct Messages"
+  }
 }
