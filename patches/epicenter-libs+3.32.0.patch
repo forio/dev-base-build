@@ -1,0 +1,82 @@
+diff --git a/node_modules/epicenter-libs/dist/browser/epicenter-11766ebb.js b/node_modules/epicenter-libs/dist/browser/epicenter-11766ebb.js
+index cb71f19..b18eab8 100644
+--- a/node_modules/epicenter-libs/dist/browser/epicenter-11766ebb.js
++++ b/node_modules/epicenter-libs/dist/browser/epicenter-11766ebb.js
+@@ -1608,6 +1608,7 @@ let PUSH_CATEGORY;
+   PUSH_CATEGORY["CONSENSUS"] = "CONSENSUS";
+   PUSH_CATEGORY["CONTROL"] = "CONTROL";
+   PUSH_CATEGORY["PRESENCE"] = "PRESENCE";
++  PUSH_CATEGORY["LEADERBOARD"] = "LEADERBOARD";
+   PUSH_CATEGORY["LOBBY"] = "LOBBY";
+   PUSH_CATEGORY["RUN"] = "RUN";
+   PUSH_CATEGORY["VAULT"] = "VAULT";
+diff --git a/node_modules/epicenter-libs/dist/cjs/epicenter-9ee8b376.js b/node_modules/epicenter-libs/dist/cjs/epicenter-9ee8b376.js
+index 950ae86..78fcfe3 100644
+--- a/node_modules/epicenter-libs/dist/cjs/epicenter-9ee8b376.js
++++ b/node_modules/epicenter-libs/dist/cjs/epicenter-9ee8b376.js
+@@ -2743,6 +2743,7 @@ exports.PUSH_CATEGORY = void 0;
+   PUSH_CATEGORY["CONSENSUS"] = "CONSENSUS";
+   PUSH_CATEGORY["CONTROL"] = "CONTROL";
+   PUSH_CATEGORY["PRESENCE"] = "PRESENCE";
++  PUSH_CATEGORY["LEADERBOARD"] = "LEADERBOARD";
+   PUSH_CATEGORY["LOBBY"] = "LOBBY";
+   PUSH_CATEGORY["RUN"] = "RUN";
+   PUSH_CATEGORY["VAULT"] = "VAULT";
+diff --git a/node_modules/epicenter-libs/dist/epicenter.js b/node_modules/epicenter-libs/dist/epicenter.js
+index d206195..b0cfda3 100644
+--- a/node_modules/epicenter-libs/dist/epicenter.js
++++ b/node_modules/epicenter-libs/dist/epicenter.js
+@@ -1614,6 +1614,7 @@
+ 	  PUSH_CATEGORY["CONSENSUS"] = "CONSENSUS";
+ 	  PUSH_CATEGORY["CONTROL"] = "CONTROL";
+ 	  PUSH_CATEGORY["PRESENCE"] = "PRESENCE";
++	  PUSH_CATEGORY["LEADERBOARD"] = "LEADERBOARD";
+ 	  PUSH_CATEGORY["LOBBY"] = "LOBBY";
+ 	  PUSH_CATEGORY["RUN"] = "RUN";
+ 	  PUSH_CATEGORY["VAULT"] = "VAULT";
+diff --git a/node_modules/epicenter-libs/dist/module/epicenter-0a3cdc46.js b/node_modules/epicenter-libs/dist/module/epicenter-0a3cdc46.js
+index 2c5a1a4..752a607 100644
+--- a/node_modules/epicenter-libs/dist/module/epicenter-0a3cdc46.js
++++ b/node_modules/epicenter-libs/dist/module/epicenter-0a3cdc46.js
+@@ -2733,6 +2733,7 @@ let PUSH_CATEGORY;
+   PUSH_CATEGORY["CONSENSUS"] = "CONSENSUS";
+   PUSH_CATEGORY["CONTROL"] = "CONTROL";
+   PUSH_CATEGORY["PRESENCE"] = "PRESENCE";
++  PUSH_CATEGORY["LEADERBOARD"] = "LEADERBOARD";
+   PUSH_CATEGORY["LOBBY"] = "LOBBY";
+   PUSH_CATEGORY["RUN"] = "RUN";
+   PUSH_CATEGORY["VAULT"] = "VAULT";
+diff --git a/node_modules/epicenter-libs/dist/types/utils/constants.d.ts b/node_modules/epicenter-libs/dist/types/utils/constants.d.ts
+index 635bac8..4c229fb 100644
+--- a/node_modules/epicenter-libs/dist/types/utils/constants.d.ts
++++ b/node_modules/epicenter-libs/dist/types/utils/constants.d.ts
+@@ -112,6 +112,12 @@ export declare enum PUSH_CATEGORY {
+      * @constant
+      * @type {string} */
+     PRESENCE = "PRESENCE",
++    /**
++     * Used for the Leaderboard API
++     * no pub
++     * @constant
++     * @type {string} */
++    LEADERBOARD = "LEADERBOARD",
+     /**
+      * intended for awaiting entering games
+      * yes pub
+diff --git a/node_modules/epicenter-libs/src/utils/constants.ts b/node_modules/epicenter-libs/src/utils/constants.ts
+index 2f40349..072fa84 100644
+--- a/node_modules/epicenter-libs/src/utils/constants.ts
++++ b/node_modules/epicenter-libs/src/utils/constants.ts
+@@ -117,6 +117,12 @@ export enum PUSH_CATEGORY {
+      * @constant
+      * @type {string} */
+     PRESENCE = 'PRESENCE',
++    /**
++     * Used for the Leaderboard API
++     * no pub
++     * @constant
++     * @type {string} */
++    LEADERBOARD = 'LEADERBOARD',
+     /**
+      * intended for awaiting entering games
+      * yes pub

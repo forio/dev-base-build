@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
-export const MODEL = 'model.xlsx';
+export const MODEL = 'model.py';
 
 const byUserPerEpisode = ({
   session,
@@ -30,7 +30,32 @@ const byUserPerEpisode = ({
         })
         .then((response) => response.values as Array<RunReadOutView>);
       if (run) return run;
-      return runAdapter.create(MODEL, scope).then((run) => run as RunReadOutView);
+      return runAdapter
+        .create(MODEL, scope, {
+          executionContext: {
+            version: 'v1',
+            // The installed epicenter-libs types lag execution preset support.
+            // @ts-expect-error - Fixed in future version
+            presets: {
+              leaderboardScope: {
+                scopeBoundary: SCOPE_BOUNDARY.EPISODE,
+                scopeKey: episodeKey,
+              },
+            },
+          },
+          modelContext: {
+            version: 'v2',
+            // ExternalFunction uses root-element polymorphism on the wire.
+            // The installed epicenter-libs types lag that payload shape.
+            // @ts-expect-error - Fixed in future version
+            externalFunctions: {
+              leaderboard: {
+                leaderboard: {},
+              },
+            },
+          },
+        })
+        .then((run) => run as RunReadOutView);
     },
     staleTime: Infinity,
   });
@@ -45,21 +70,19 @@ const byWorld = ({ worldKey }: { worldKey: string }) =>
     staleTime: Infinity,
   });
 
-const RANGES = [
-  'Time',
-  'Bike_Sales',
-  'Price',
-  'Revenue',
-  'Variable_Costs',
-  'Fixed_Costs',
-  'Total_Costs',
-  'Profit',
-  'Step',
-] as const;
+const STATE_VARIABLES = ['state'] as const;
 
-type Variables = { Step: number } & {
-  [K in Exclude<(typeof RANGES)[number], 'Step'>]: number[];
+export type GameState = {
+  'py/object'?: string;
+  minimum: number;
+  maximum: number;
+  guesses: number[];
+  advice: string;
+  won: boolean;
+  attempts: number;
 };
+
+type Variables = { state: GameState };
 
 const byEpisode = ({
   session,
@@ -78,7 +101,7 @@ const byEpisode = ({
   invariant(groupName, 'Reached authenticated route without session.groupName');
 
   const filter = ['run.hidden=false'];
-  const variables = [...RANGES];
+  const variables = [...STATE_VARIABLES];
 
   return queryOptions({
     queryKey: ['run', 'per-episode', groupName, episode.name, filter, variables],
@@ -96,10 +119,10 @@ const byEpisode = ({
 
 const variables = ({ runKey }: { runKey: string }) =>
   queryOptions({
-    queryKey: ['run', 'variables', runKey, ...RANGES],
+    queryKey: ['run', 'variables', runKey, ...STATE_VARIABLES],
     queryFn: () =>
       runAdapter
-        .getVariables(runKey!, [...RANGES], { ritual: 'REVIVE' })
+        .getVariables(runKey!, [...STATE_VARIABLES], { ritual: 'REVIVE' })
         .then((response) => {
           invariant(
             !Array.isArray(response),

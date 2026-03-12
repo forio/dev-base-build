@@ -40,3 +40,5 @@ __pycache__
 # misc
 *.debug
 *.local
+playwright-report
+test-results

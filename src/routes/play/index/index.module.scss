@@ -1,39 +1,284 @@
 .root {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 56rem;
+  margin: 0 auto;
 }
 
-.chart {
-  margin: var(--space-4) 0;
-  align-self: center;
+/* ── Header bar ── */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-.resetForm,
-.decisionForm {
-  align-self: center;
-  display: flex;
-  flex-direction: column;
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--surface-11);
+  margin-right: auto;
+}
+
+.tag {
+  font-size: 0.675rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--surface-11);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Layout ── */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.play {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* ── Guess form ── */
+
+.form {
+  display: grid;
   gap: 0.5rem;
-  align-items: flex-start;
+}
 
-  h2 {
-    margin: 0 0 0.25rem;
-    font-size: 1rem;
+.inputRow {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.guessInput {
+  flex: 1;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  padding: 0.45rem 0.65rem !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  -moz-appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.hint {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.hintUp {
+  color: var(--accent-11);
+  background: var(--accent-3);
+}
+
+.hintDown {
+  color: #9a4e00;
+  background: #fff4e6;
+}
+
+/* ── Won state ── */
+
+.won {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-small);
+  background: var(--success-2);
+  border: 1px solid var(--success-6);
+}
+
+.wonRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.wonIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--success-9);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.won strong {
+  font-size: 1rem;
+}
+
+.won p {
+  font-size: 0.8rem;
+  color: var(--success-11);
+}
+
+/* ── Guess log ── */
+
+.log {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+
+  th {
+    text-align: left;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--surface-10);
+    border-bottom: 1px solid var(--surface-5);
+  }
+
+  td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--surface-3);
+  }
+
+  th:first-child,
+  td:first-child {
+    width: 1%;
+    text-align: right;
+    padding-right: 0.4rem;
+    color: var(--surface-9);
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 1%;
+    text-align: right;
+    padding-right: 0.75rem;
     font-weight: 600;
   }
 
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-weight: 500;
+  tr[data-feedback='Higher'] td:last-child {
+    color: var(--accent-11);
   }
-  button {
-    align-self: stretch;
+
+  tr[data-feedback='Lower'] td:last-child {
+    color: #9a4e00;
+  }
+
+  tr[data-feedback='Correct'] td:last-child {
+    color: var(--success-11);
+    font-weight: 700;
   }
 }
 
-.resetForm {
+/* ── Leaderboard ── */
+
+.board {
+  display: grid;
+  gap: 0.4rem;
+  position: sticky;
+  top: 0.75rem;
+}
+
+.boardHead {
+  display: flex;
   align-items: center;
+  gap: 0.4rem;
+
+  h2 {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+}
+
+.count {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--surface-10);
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--surface-4);
+  border-radius: var(--radius-small);
+  background: var(--surface-4);
+  overflow: hidden;
+  max-height: 28rem;
+  overflow-y: auto;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-1);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+
+.rank {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--surface-10);
+}
+
+.name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.score {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: var(--surface-12);
+}
+
+.empty {
+  font-size: 0.82rem;
+  color: var(--surface-10);
+  text-align: center;
+  padding: 1.5rem 0.75rem;
+  border: 1px dashed var(--surface-6);
+  border-radius: var(--radius-small);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .board {
+    position: static;
+  }
 }
