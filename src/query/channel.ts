@@ -11,7 +11,7 @@ export const useChannel = ({
   pushCategory,
 }: {
   scopeBoundary: ChannelScope['scopeBoundary'];
-  scopeKey: ChannelScope['scopeKey'];
+  scopeKey: ChannelScope['scopeKey'] | undefined;
   pushCategory: ChannelScope['pushCategory'];
 }) =>
   useMemo(
@@ -39,13 +39,26 @@ export const useChannelEffect = <M>({
   useEffect(() => {
     if (!channel) return;
 
-    const subscribe = () => channel.subscribe(callback);
-    const unsubscribe = () => channel.unsubscribe();
+    const subscribe = async () => {
+      try {
+        await channel.subscribe(callback);
+      } catch (error) {
+        console.error(`Channel subscribe failed for ${channel.path}`, error);
+      }
+    };
 
-    queue.current = queue.current.then(subscribe);
+    const unsubscribe = async () => {
+      try {
+        await channel.unsubscribe();
+      } catch (error) {
+        console.error(`Channel unsubscribe failed for ${channel.path}`, error);
+      }
+    };
+
+    queue.current = queue.current.catch(() => undefined).then(subscribe);
 
     return () => {
-      queue.current = queue.current.then(unsubscribe);
+      queue.current = queue.current.catch(() => undefined).then(unsubscribe);
     };
   }, [channel, callback, token]);
 };

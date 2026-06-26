@@ -9,7 +9,6 @@ import { Card } from '~/components/ui/card/card';
 import { useGuardedSession } from '~/query/auth';
 import { useChannel, useChannelEffect } from '~/query/channel';
 import { EpisodeQuery } from '~/query/episode';
-import { EpisodeReadOutView } from '~/types/episode';
 import { GroupChannelPush } from '~/types/push';
 import { Lang } from './lang';
 import styles from './play.module.scss';
@@ -53,20 +52,39 @@ const Impl = () => {
    * Set `project.allowChannelGroupDefault: true` to create groups with the flag on.
    */
   const onGroupChannelPush = useCallback(
-    (
-      message: GroupChannelPush<{
-        type: 'EPISODE';
-        content: {
-          activity: 'create';
-          episode: EpisodeReadOutView;
-          groupKey: string;
-          objectType: 'episode';
-        };
-      }>
-    ) => {
-      switch (message.content.activity) {
-        case 'create':
+    (message: GroupChannelPush) => {
+      switch (message.content.objectType) {
+        case 'episode':
           return queryClient.invalidateQueries(EpisodeQuery.current({ session }));
+        // case 'assignment': {
+        //   const currentEpisode = queryClient.getQueryData<EpisodeReadOutView>(
+        //     EpisodeQuery.current({ session }).queryKey
+        //   );
+        //   if (!currentEpisode) return undefined;
+
+        //   const pushedWorldsForCurrentEpisode = (message.content.worlds ?? []).filter(
+        //     isWorldInEpisode(currentEpisode)
+        //   );
+
+        //   const myCachedWorld = queryClient.getQueryData<WorldReadOutView>(
+        //     WorldQuery.bySessionPerEpisode({
+        //       session,
+        //       episodeName: currentEpisode.name,
+        //     }).queryKey
+        //   );
+
+        //   const placementChangeReason = detectPlacementChangeFromPush({
+        //     pushedWorlds: pushedWorldsForCurrentEpisode,
+        //     cachedWorld: myCachedWorld,
+        //     userKey: session.userKey,
+        //   });
+
+        //   if (placementChangeReason) {
+        //     void regenerateSession().catch(console.error);
+        //   }
+
+        //   return undefined;
+        // }
         default:
           console.warn('Unknown group channel message', message);
       }

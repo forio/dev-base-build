@@ -30,8 +30,8 @@ export type AssignmentMap = {
   [key: string]: AssignmentCreateInView[];
 };
 
-export type AssignmentReadOutView = {
-  role: string;
+export type AssignmentReadOutView<R extends string = string> = {
+  role: R;
   user: PseudonymReadOutView;
 };
 
@@ -54,10 +54,12 @@ export type WorldCreateInView = {
   allowChannel?: boolean;
 };
 
-export type WorldReadOutView = {
+export type WorldReadOutView<
+  A extends AssignmentReadOutView = AssignmentReadOutView,
+> = {
   lastUpdated?: string;
   personae?: PersonaReadOutView[];
-  assignments: AssignmentReadOutView[];
+  assignments: Array<A>;
   orbitKey?: string;
   worldKey: string;
   displayName?: string;

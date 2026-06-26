@@ -1,8 +1,8 @@
 import { PseudonymReadOutView } from './user';
 
 export type PresenceReadOutView = {
-  lastUpdated?: string;
+  lastUpdated?: number;
   ttlSeconds?: number;
   user: PseudonymReadOutView;
-  groupRole: 'facilitator' | 'reviewer' | 'leader' | 'participant';
+  groupRole: 'FACILITATOR' | 'REVIEWER' | 'LEADER' | 'PARTICIPANT';
 };

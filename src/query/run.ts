@@ -6,6 +6,7 @@ import { RunReadOutView } from '~/types/run';
 
 export const MODEL = 'model.xlsx';
 
+/* Unused in multiplayer */
 const byUserPerEpisode = ({
   session,
   episodeKey,
@@ -35,12 +36,19 @@ const byUserPerEpisode = ({
     staleTime: Infinity,
   });
 
-const byWorld = ({ worldKey }: { worldKey: string }) =>
+const byWorld = ({ session, worldKey }: { session: UserSession; worldKey: string }) =>
   queryOptions({
-    queryKey: ['run', 'byWorld', worldKey],
+    queryKey: ['run', 'byWorld', worldKey, session.userKey],
     queryFn: () =>
       runAdapter
-        .retrieveFromWorld(worldKey!, MODEL, { allowChannel: true })
+        .retrieveFromWorld(worldKey!, MODEL, {
+          allowChannel: true,
+          executionContext: {
+            version: 'V1',
+            // @ts-expect-error type fixed 3.33.0
+            presets: { creator: session.userKey },
+          },
+        })
         .then((response) => response as unknown as RunReadOutView),
     staleTime: Infinity,
   });
@@ -110,9 +118,13 @@ const variables = ({ runKey }: { runKey: string }) =>
         .then((response) => response as Variables),
   });
 
-const METADATA_KEYS = [] as const;
-type MetadataResponse = [];
-export type Metadata = Record<string, unknown>;
+const METADATA_KEYS = ['editor'] as const;
+type MetadataResponse = [
+  string | null, // editor
+];
+export type Metadata = {
+  editor: string | null;
+};
 
 const metadata = ({ runKey }: { runKey: string }) =>
   queryOptions({
@@ -121,15 +133,11 @@ const metadata = ({ runKey }: { runKey: string }) =>
       runAdapter
         .getMetadata(runKey!, [...METADATA_KEYS])
         .catch((error) => {
-          if (error instanceof Fault && error.status === 410) return [];
+          if (error instanceof Fault && error.status === 410) return [null];
           throw error;
         })
         .then((response) => response as MetadataResponse)
-        .then(
-          (_values): Metadata => ({
-            /* ... */
-          })
-        ),
+        .then(([editor]): Metadata => ({ editor })),
   });
 
 export const RunQuery = {
