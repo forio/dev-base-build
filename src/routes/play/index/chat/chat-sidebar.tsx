@@ -10,21 +10,25 @@ type ChatSidebarProps = {
   conversations: Conversation[];
   activeRoom: string;
   onSelect: (room: string) => void;
+  onlineUserKeys: Set<string>;
 };
 
 type ConversationButtonProps = {
   conversation: Conversation;
   activeRoom: string;
   onSelect: (room: string) => void;
+  onlineUserKeys: Set<string>;
 };
 
 const ConversationButton: FC<ConversationButtonProps> = ({
   conversation,
   activeRoom,
   onSelect,
+  onlineUserKeys,
 }) => {
   const unread = useAtomValue(chatRoomUnreadAtomFamily(conversation.room));
   const active = conversation.room === activeRoom;
+  const peerOnline = conversation.kind !== 'dm' || onlineUserKeys.has(conversation.peerKey);
 
   return (
     <button
@@ -33,14 +37,32 @@ const ConversationButton: FC<ConversationButtonProps> = ({
     >
       <span className={styles.labelGroup}>
         {conversation.kind !== 'dm' && <span className={styles.hash}>#</span>}
-        <span className={styles.label}>{conversation.label}</span>
+        <span className={styles.labelStack}>
+          <span className={styles.label}>{conversation.label}</span>
+          {conversation.kind === 'dm' && (
+            <span
+              className={cn(
+                styles.status,
+                peerOnline ? styles.online : styles.offline
+              )}
+            >
+              <span className={styles.statusDot} aria-hidden />
+              <Lang kp="chat">{peerOnline ? 'online' : 'offline'}</Lang>
+            </span>
+          )}
+        </span>
       </span>
       {unread && <span className={styles.unreadDot} aria-hidden />}
     </button>
   );
 };
 
-export const ChatSidebar: FC<ChatSidebarProps> = ({ conversations, activeRoom, onSelect }) => {
+export const ChatSidebar: FC<ChatSidebarProps> = ({
+  conversations,
+  activeRoom,
+  onSelect,
+  onlineUserKeys,
+}) => {
   const channels = useMemo(() => conversations.filter((c) => c.kind !== 'dm'), [conversations]);
   const dms = useMemo(() => conversations.filter((c) => c.kind === 'dm'), [conversations]);
 
@@ -55,6 +77,7 @@ export const ChatSidebar: FC<ChatSidebarProps> = ({ conversations, activeRoom, o
           conversation={c}
           activeRoom={activeRoom}
           onSelect={onSelect}
+          onlineUserKeys={onlineUserKeys}
         />
       ))}
       {dms.length > 0 && (
@@ -68,6 +91,7 @@ export const ChatSidebar: FC<ChatSidebarProps> = ({ conversations, activeRoom, o
               conversation={c}
               activeRoom={activeRoom}
               onSelect={onSelect}
+              onlineUserKeys={onlineUserKeys}
             />
           ))}
         </>

@@ -8,9 +8,11 @@ import { RunQuery } from '~/query/run';
 import { WorldQuery } from '~/query/world';
 import { ChatLayout } from './chat/chat-layout';
 import { Conversation, dmRoom } from './chat/types';
+import invariant from 'tiny-invariant';
 
 export const PlayerHome = () => {
   const session = useGuardedSession();
+  invariant(session.groupKey, 'Reached player route without session.groupKey');
 
   const { data: episode } = useSuspenseQuery(EpisodeQuery.current({ session }));
   const { data: world } = useSuspenseQuery(
@@ -86,6 +88,7 @@ export const PlayerHome = () => {
       currentUserKey={session.userKey}
       members={participants}
       token={session.token}
+      groupKey={session.groupKey}
       episodeKey={episode.episodeKey}
       worldKey={world.worldKey}
       chatStateScope={chatStateScope}

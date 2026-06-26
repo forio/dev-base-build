@@ -1,13 +1,15 @@
-import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import type { Store } from 'jotai/vanilla/store';
 import { chatAdapter, PUSH_CATEGORY, SCOPE_BOUNDARY } from 'epicenter-libs';
 import { FC, Suspense, useEffect, useMemo } from 'react';
 import { useChannel, useChannelEffect } from '~/query/channel';
 import { ChatQuery } from '~/query/chat';
+import { PresenceQuery } from '~/query/presence';
 import { ChatMessage } from '~/types/chat';
 import { GroupPermissionReadOutView } from '~/types/group';
-import { ChatChannelPush } from '~/types/push';
+import { ChatChannelPush, PresenceChannelPush } from '~/types/push';
+import { PresenceReadOutView } from '~/types/presence';
 import { ChatMessages } from './chat-messages';
 import { ChatSidebar } from './chat-sidebar';
 import {
@@ -76,11 +78,31 @@ const onChatPushImpl =
     return queryClient.invalidateQueries({ queryKey });
   };
 
+const presenceUserKey = (presence: PresenceReadOutView) => presence.user?.userKey;
+
+const onPresencePushImpl =
+  (queryClient: QueryClient, groupKey: string) =>
+  (data: PresenceChannelPush) => {
+    const userKey = presenceUserKey(data.content);
+    if (!userKey) return;
+
+    const apply = (previous: PresenceReadOutView[] | undefined) => {
+      const remaining = (previous ?? []).filter(
+        (presence) => presenceUserKey(presence) !== userKey
+      );
+
+      return data.type === 'logout' ? remaining : [data.content, ...remaining];
+    };
+
+    queryClient.setQueryData(PresenceQuery.group({ groupKey }).queryKey, apply);
+  };
+
 type ChatLayoutProps = {
   conversations: Conversation[];
   currentUserKey: string;
   members: GroupPermissionReadOutView[];
   token: string;
+  groupKey: string;
   episodeKey: string;
   worldKey: string;
   chatStateScope: string;
@@ -91,6 +113,7 @@ export const ChatLayout: FC<ChatLayoutProps> = ({
   currentUserKey,
   members,
   token,
+  groupKey,
   episodeKey,
   worldKey,
   chatStateScope,
@@ -100,6 +123,11 @@ export const ChatLayout: FC<ChatLayoutProps> = ({
   const activeRoom = useAtomValue(activeChatRoomAtom);
   const setActiveRoom = useSetAtom(setActiveChatRoomAtom);
   const syncChatStateScope = useSetAtom(syncChatStateScopeAtom);
+  const { data: presence = [] } = useQuery(PresenceQuery.group({ groupKey }));
+  const onlineUserKeys = useMemo(
+    () => new Set(presence.map((entry) => entry.user.userKey)),
+    [presence]
+  );
 
   const episodeChannel = useChannel({
     scopeBoundary: SCOPE_BOUNDARY.EPISODE,
@@ -112,14 +140,24 @@ export const ChatLayout: FC<ChatLayoutProps> = ({
     scopeKey: worldKey,
     pushCategory: PUSH_CATEGORY.CHAT,
   });
+  const groupPresenceChannel = useChannel({
+    scopeBoundary: SCOPE_BOUNDARY.GROUP,
+    scopeKey: groupKey,
+    pushCategory: PUSH_CATEGORY.PRESENCE,
+  });
 
   const onChatPush = useMemo(
     () => onChatPushImpl(queryClient, store, currentUserKey),
     [queryClient, store, currentUserKey]
   );
+  const onPresencePush = useMemo(
+    () => onPresencePushImpl(queryClient, groupKey),
+    [queryClient, groupKey]
+  );
 
   useChannelEffect({ token, channel: episodeChannel, callback: onChatPush });
   useChannelEffect({ token, channel: worldChannel, callback: onChatPush });
+  useChannelEffect({ token, channel: groupPresenceChannel, callback: onPresencePush });
 
   useEffect(() => {
     syncChatStateScope(chatStateScope);
@@ -144,12 +182,14 @@ export const ChatLayout: FC<ChatLayoutProps> = ({
         conversations={conversations}
         activeRoom={active.room}
         onSelect={setActiveRoom}
+        onlineUserKeys={onlineUserKeys}
       />
       <Suspense fallback={<div style={{ flex: 1 }} />}>
         <ChatMessages
           conversation={active}
           currentUserKey={currentUserKey}
           members={members}
+          onlineUserKeys={onlineUserKeys}
         />
       </Suspense>
     </div>

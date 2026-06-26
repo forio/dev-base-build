@@ -8,6 +8,9 @@
     "type_message": "Type a message…",
     "send": "Send",
     "no_messages": "No messages yet. Start the conversation!",
-    "direct_messages": "Direct Messages"
+    "direct_messages": "Direct Messages",
+    "online": "Online",
+    "offline": "Offline",
+    "offline_message_disabled": "This user is offline"
   }
 }

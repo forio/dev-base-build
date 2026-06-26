@@ -48,11 +48,43 @@
   min-width: 0;
 }
 
+.labelStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--surface-10);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-regular);
+  line-height: 1;
+}
+
+.statusDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.online .statusDot {
+  background: var(--success-9);
+}
+
+.offline .statusDot {
+  background: var(--surface-8);
 }
 
 .active {

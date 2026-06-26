@@ -19,6 +19,30 @@
   color: var(--surface-8);
 }
 
+.headerStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--surface-10);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-regular);
+}
+
+.headerStatusDot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.online .headerStatusDot {
+  background: var(--success-9);
+}
+
+.offline .headerStatusDot {
+  background: var(--surface-8);
+}
+
 .messageList {
   flex: 1;
   overflow-y: auto;

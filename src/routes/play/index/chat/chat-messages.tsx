@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tansta
 import { chatAdapter } from 'epicenter-libs';
 import { useSetAtom } from 'jotai';
 import { FC, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '~/components/ui/button/button';
 import { Input } from '~/components/ui/input/input';
+import { cn } from '~/components/ui/cn';
 import { ChatQuery } from '~/query/chat';
 import { GroupPermissionReadOutView } from '~/types/group';
 import { Lang } from '../../lang';
@@ -15,6 +17,7 @@ type ChatMessagesProps = {
   conversation: Conversation;
   currentUserKey: string;
   members: GroupPermissionReadOutView[];
+  onlineUserKeys: Set<string>;
 };
 
 const formatRelativeTime = (created: number) => {
@@ -31,11 +34,14 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
   conversation,
   currentUserKey,
   members,
+  onlineUserKeys,
 }) => {
   const queryClient = useQueryClient();
   const clearChatRoomUnread = useSetAtom(clearChatRoomUnreadAtom);
+  const { t } = useTranslation('play', { keyPrefix: 'chat' });
   const [text, setText] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
+  const peerOnline = conversation.kind !== 'dm' || onlineUserKeys.has(conversation.peerKey);
 
   const { data: chat } = useSuspenseQuery(
     ChatQuery.byRoom({ room: conversation.room, scope: conversation.scope })
@@ -107,11 +113,13 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
       queryClient.invalidateQueries(ChatQuery.messages({ chatKey: chat.chatKey }));
     },
   });
+  const canSend = peerOnline && !sendMutation.isPending;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = text.trim();
     if (!trimmed) return;
+    if (!peerOnline) return;
     setText('');
     sendMutation.mutate(trimmed);
   };
@@ -121,6 +129,17 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
       <div className={styles.header}>
         {conversation.kind !== 'dm' && <span className={styles.headerHash}>#</span>}
         {conversation.label}
+        {conversation.kind === 'dm' && (
+          <span
+            className={cn(
+              styles.headerStatus,
+              peerOnline ? styles.online : styles.offline
+            )}
+          >
+            <span className={styles.headerStatusDot} aria-hidden />
+            <Lang kp="chat">{peerOnline ? 'online' : 'offline'}</Lang>
+          </span>
+        )}
       </div>
 
       {messages.length === 0 ? (
@@ -153,9 +172,10 @@ export const ChatMessages: FC<ChatMessagesProps> = ({
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message…"
+          placeholder={peerOnline ? t('type_message') : t('offline_message_disabled')}
+          disabled={!peerOnline}
         />
-        <Button type="submit" disabled={!text.trim()}>
+        <Button type="submit" disabled={!text.trim() || !canSend}>
           <Lang kp="chat">send</Lang>
         </Button>
       </form>

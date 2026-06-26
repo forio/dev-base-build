@@ -1,3 +1,4 @@
+import { PresenceReadOutView } from './presence';
 import { RunReadOutView } from './run';
 
 export type ChatChannelPush = {
@@ -34,6 +35,21 @@ export type GroupChannelPush<C> = {
     key: string;
   };
 } & C;
+
+export type PresenceChannelPush = {
+  date: string;
+  type: 'login' | 'logout';
+  address: {
+    boundary: 'GROUP';
+    category: 'PRESENCE';
+    key: string;
+  };
+  sender: {
+    type: string;
+    key: string;
+  };
+  content: PresenceReadOutView;
+};
 
 export type BaseWorldRunChannelPush<
   State,
