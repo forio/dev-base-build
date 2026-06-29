@@ -1,271 +1,120 @@
-# Forio Epicenter React Template
+# Market Signal Base Build
 
-A batteries‑included starter for building **participant‑facing** and
-**facilitator‑facing** web apps on the [Forio Epicenter](https://forio.com/epicenter/)
-simulation platform. It combines Epicenter’s **`epicenter-libs` v3** adapters with a
-modern React + Vite stack, disciplined data‑fetching via **TanStack Query**, and an
-extensible component system powered by **Radix UI, CSS Modules, and
-class‑variance‑authority (`cva`)**.
+This branch is the Market Signal example. It demonstrates **world-scoped runs with an
+intentionally narrow proxy carveout**. Each team runs a desk on a trading floor: it picks
+a market **signal**, **talks its book** with a one-line public **pitch**, and keeps a
+sealed **private note** to itself. Once a desk locks, it can read the *public* posture of
+every other desk in the episode — but never their private notes.
 
----
+The narrow, read-only window onto other desks is served by a small **proxy** server in
+[`proxy/`](proxy/README.md). The proxy also includes a no-op `/completion` stub to show the
+other common proxy pattern: holding a private service key server-side without exposing it
+to the browser. The proxy README covers both examples, when a proxy is the right tool, and
+Forio's guidance on using one sparingly and with least permission.
 
-## Table of contents
+## Quickstart
 
-1. [Quick start](#quick-start)
-2. [.env configuration](#env-configuration)
-3. [Project scripts](#project-scripts)
-4. [Architecture overview](#architecture-overview) • [Routing & guards](#routing--guards)
-   • [Authentication flow](#authentication-flow) •
-   [Data‑fetching conventions (`query/`)](#data-fetching-conventions-query) •
-   [Extending the UI component system (`components/ui/`)](#extending-the-ui-component-system-componentsui)
-5. [Internationalization (i18n)](#internationalization-i18n)
+### Create a project
 
----
+Create a project in Epicenter. Make note of the `Project ID`, known internally as
+`project.projectShortName`.
 
-## Quick start
+### Project settings
 
-```bash
-# 1  Use the Node version declared in .nvmrc
-nvm use
+Set the following project settings in the Epicenter UI:
 
-# 2  Install deps
-npm install
+- Web Access: Allow access to all URLs by default
+- Push Channel: Enabled
+- Allow Channel Workshop Default: Enabled
 
-# 3  Create a local‑only .env and fill in the three vars below
-cp .env .env            # if the file doesn’t exist, create it manually
+#### Project multiplayer settings
 
-# 4  Run the dev server
-npm run dev             # http://localhost:8888
-```
+- Multiplayer: Enabled
+- Role Name: Player; Minimum: 1; Maximum: No Max
+- On the Multiplayer Assignments page, start with assignments belonging to the: Most
+  Recent Run Configuration
 
-> **Production note** When this bundle is served from
-> `https://forio.com/app/<account>/<project>/…`, Epicenter automatically reads the
-> **account** and **project** from the URL and injects them into every API call. The
-> `.env` file is **only** used when you develop on `localhost`, because the browser URL no
-> longer contains that information.
+Each world is one desk. The floor is more interesting with more than one desk, so plan on
+at least two worlds.
 
----
+#### Proxy
 
-## .env configuration
+This branch deploys a proxy server, which requires an account enabled for project-scoped
+proxies. See [`proxy/README.md`](proxy/README.md) for that prerequisite and the details; it
+is set up as part of the deploy below.
 
-`src/main.tsx` switches the Epicenter SDK into _local mode_ (`config.isLocal() === true`)
-whenever the app is served by Vite. Provide the following variables in a top‑level
-**`.env`** file:
+### Deploy project files to Epicenter
 
-| Variable                         | Example             | Purpose                                      |
-| -------------------------------- | ------------------- | -------------------------------------------- |
-| `VITE_DEV_ACCOUNT_SHORT_NAME`    | `acme-simulations`  | Your Epicenter account slug                  |
-| `VITE_DEV_PROJECT_SHORT_NAME`    | `supply-chain-game` | The project (simulation) slug                |
-| `VITE_DEV_API_HOST` _(optional)_ | `forio.com`         | Override only if you proxy the Epicenter API |
+1. `npx degit forio/dev-base-build#proxy my-project`
+2. `cd my-project`
+3. `npm install`
+4. `npm install --prefix proxy` (installs the proxy server's dependencies)
+5. `npm run deploy`
 
-If `VITE_DEV_API_HOST` is omitted it falls back to `forio.com` – the public cloud.
+`npm run deploy` builds the React app into `public/`, uploads the built frontend and the
+checked-in model files from `model/`, and deploys the proxy server from `proxy/` —
+including its installed `node_modules` and any local, git-ignored `proxy/env.json` you
+choose to provide — then resets the proxy so it boots the freshly deployed code. Re-run
+`npm install --prefix proxy` whenever the proxy's dependencies change.
 
-```ts
-// src/main.tsx – excerpt
-if (config.isLocal()) {
-  config.accountShortName = import.meta.env.VITE_DEV_ACCOUNT_SHORT_NAME;
-  config.projectShortName = import.meta.env.VITE_DEV_PROJECT_SHORT_NAME;
-  config.apiHost = import.meta.env.VITE_DEV_API_HOST; // default: "forio.com"
-}
-```
+During `npm run deploy`, you will be prompted to enter your project information and
+administrator credentials:
 
----
+- `SERVER`: The Epicenter server URL (default `https://forio.com`)
+- `ACCOUNT_SHORT_NAME`: `account.shortName` of the organization that owns the project.
+  This is exposed in the Epicenter UI on organization settings as `Organization ID`.
+- `PROJECT_SHORT_NAME`: `project.projectShortName` of the project.
+- `ADMIN_HANDLE`: The email for an administrator account that belongs to the organization.
+  Probably the email you use to log in to the Epicenter UI.
+- `ADMIN_PASSWORD`: The password for the administrator account.
 
-## Project scripts
+This is saved to `cli/config.json`, which you can edit later.
 
-| Script            | Description                                                           |
-| ----------------- | --------------------------------------------------------------------- |
-| `npm run dev`     | Launches Vite with React Fast‑refresh on **`localhost:8888`**         |
-| `npm run build`   | Type‑checks (`tsc -b`) then builds a production bundle into `public/` |
-| `npm run preview` | Serves the **built** bundle locally                                   |
-| `npm run lint`    | ESLint + TypeScript rules (see `.eslintrc.cjs`)                       |
-| `postinstall`     | Applies any **patch‑package** overrides                               |
+### Model files
 
----
+The model for this branch is `model/model.py`, a Python model with four variables:
+`signal`, `pitch`, `private_note`, and `ready`. Edit it directly if the model contract
+changes, then redeploy with `npm run deploy` (or `npm run deploy:model` for the model
+alone).
 
-## Architecture overview
+### Set up a workshop and user accounts
 
-### Routing & guards
+Create a workshop for the project. Add at least one facilitator user and two or more
+participants to the workshop.
 
-File‑based routes live under **`src/routes/`**. A single HashRouter tree is created in
-`main.tsx`:
+On the workshop page, impersonate the facilitator once before players join. The app
+creates the first episode for the workshop when the facilitator opens it. Facilitators
+land on `#/facilitator`.
 
-| URL             | Guard                | Shell              | Purpose                                                |
-| --------------- | -------------------- | ------------------ | ------------------------------------------------------ |
-| `#/`            | `RequireFocusedAuth` | `PlayerShell`      | Participant view                                       |
-| `#/facilitator` | `RequireFocusedAuth` | `FacilitatorShell` | Facilitator dashboard (lazy‑loaded)                    |
-| `#/login`       | `RedirectIfAuthed`   | –                  | Public login page                                      |
-| `#/logout`      | –                    | –                  | Triggers `authAdapter.logout()` and clears local state |
+### Set up Multiplayer Assignments
 
-- **`RequireFocusedAuth`** – redirects to `/login` unless a _session + group_ exist.
-- **`RedirectIfAuthed`** – keeps logged‑in users away from `/login`, forwarding them to
-  the correct shell.
+On the Multiplayer Assignments page, assign participants to worlds. Create at least two
+worlds so each desk has peers to reveal on the floor; assign one or more participants to
+each world.
 
-### Authentication flow
+### Run locally
 
-All auth calls use the **`authAdapter`** from `epicenter-libs` v3, wrapped in
-TanStack Query **mutations** (`src/query/auth.ts`).
+Change the values in `.env` to match your project details:
 
-1. **Login** `authAdapter.login({ handle, password, groupKey? })` – if the response has
-   `multipleGroups: true` we fetch the list of groups, render a radio table, and re‑submit
-   with a chosen `groupKey`.
-2. **Session regeneration** Epicenter expires tokens after inactivity. Errors with codes
-   `AUTHENTICATION_EXPIRED` or `AUTHENTICATION_INVALIDATED` trigger the
-   `regenerateSession()` helper, which calls `authAdapter.regenerate()` and then retries
-   the failed query transparently.
-3. **Logout (`#/logout`)** The dedicated route calls `authAdapter.logout()`, clears the
-   QueryClient, wipes Jotai atoms, and finally navigates to `/login`.
+- `VITE_PROJECT_NAME`: The name of your project (shown in the site title)
+- `VITE_DEV_ACCOUNT_SHORT_NAME`: The `account.shortName` of the organization that owns the
+  project. Same as `ACCOUNT_SHORT_NAME` above.
+- `VITE_DEV_PROJECT_SHORT_NAME`: The `project.projectShortName` of the project. Same as
+  `PROJECT_SHORT_NAME` above.
+- `VITE_DEV_API_HOST`: The Epicenter API host for your server. Corresponds to `SERVER`
+  above, but without the `https://` prefix.
 
-### Data‑fetching conventions (`query/`)
+Start the development server with `npm run dev`. Visit the app at `http://localhost:8888`.
 
-Every _read_ lives in its own module, returning a **`queryOptions`** object. Components
-consume them via `useQuery(...)`.
+Log in as a participant you created above and play. Lock your desk to set `ready`, then
+reveal the floor to read every other desk's public signal and pitch. The local app calls
+the **deployed** proxy at `/proxy/<account>/<project>`, so the proxy must be deployed
+(above) for the reveal to work — you do not run the proxy locally for normal play.
 
-#### Key design rules
+## Branch notes
 
-1. **Include every variable the `queryFn` depends on in `queryKey`.** This guarantees that
-   a change in any dependency results in a _new_ cache entry instead of stale data reuse.
-2. **Order key parts from broad → narrow.** Doing so lets you selectively invalidate
-   coarse slices (e.g. `['episode']`) without evicting unrelated child caches.
-
-#### Example – `EpisodeQuery.current`
-
-```ts
-const current = ({ session }: { session: UserSession }) =>
-  queryOptions({
-    queryKey: ['episode', 'current', session.groupName, session.groupRole],
-    queryFn: async () => {
-      const [current] = await episodeAdapter
-        .query({
-          sort: ['-episode.created'],
-          max: 1,
-        })
-        .then((response) => response.values as Array<EpisodeReadOutView>);
-      if (current) return current;
-      if (session.groupRole === 'FACILITATOR') {
-        const episodeName = 'ep'.concat(Date.now().toString());
-        return episodeAdapter
-          .create(episodeName, session.groupName!)
-          .then((episode) => episode as unknown as EpisodeReadOutView);
-      }
-      throw new Error('No episode found');
-    },
-    staleTime: Infinity,
-    enabled: Boolean(session.groupName),
-  });
-```
-
-> When you pass this object to `useQuery(EpisodeQuery.current({ session }))` the key is
-> guaranteed to change whenever **`session.groupName`** does, which forces a refetch
-> instead of leaking data across groups.
-
-### Extending the UI component system (`components/ui/`)
-
-- **CSS Modules** – local, hashed class names.
-- **Radix UI primitives** – accessibility & behaviour (e.g. `@radix-ui/react-dialog`).
-- **Design tokens** – all colours, spacing, and radii live in `src/styles/tokens.scss`
-  (Radix colour scales mapped to CSS variables).
-- **`cva` (class‑variance‑authority)** – declarative styling variants.
-
-#### `cva` primer
-
-```ts
-import { cva, type VariantProps } from 'class-variance-authority';
-import styles from './tag.module.scss';
-
-// 1 Define once
-export const tagVariants = cva(styles.base, {
-  variants: {
-    intent: {
-      info: styles.info,
-      success: styles.success,
-      danger: styles.danger,
-    },
-    size: {
-      sm: styles.sm,
-      lg: styles.lg,
-    },
-  },
-  compoundVariants: [
-    {
-      intent: 'danger',
-      size: 'lg',
-      class: styles.dangerLgShadow,
-    },
-  ],
-  defaultVariants: {
-    intent: 'info',
-    size: 'sm',
-  },
-});
-
-// 2 Consume in the component
-export interface TagProps extends VariantProps<typeof tagVariants> {}
-
-export const Tag: React.FC<React.PropsWithChildren<TagProps>> = ({ intent, size, children }) => (
-  <span className={tagVariants({ intent, size })}>{children}</span>
-);
-```
-
-**Guidelines**
-
-- Keep _layout_ (flex, grid) out of variants – reserve variants for _visual‑state_
-  concerns (intent, size, emphasis).
-- The first argument (`styles.base`) should contain all structural CSS; variants add or
-  override.
-- If a component accepts `asChild`, remember to forward the `className` to `Slot`.
-
----
-
-## Internationalization (i18n)
-
-This template includes built-in support for localization using [react-i18next](https://react.i18next.com/) and the custom `Lang` component.
-
-Translation files live under `src/assets/lang/<language>/<namespace>.json` and are loaded at build time via [vite-plugin-i18next-loader](https://github.com/i18next/vite-plugin-i18next-loader). By default, the app is initialized with:
-
-```ts
-// src/main.tsx – excerpt
-i18n.use(initReactI18next).init({
-  resources,
-  lng: 'en',             // default language
-  fallbackLng: 'en',     // fallback language
-  defaultNS: 'common',   // default namespace
-  fallbackNS: 'common',
-  interpolation: { escapeValue: false },
-});
-```
-
-Use the `Lang` component to translate strings in your JSX:
-
-```tsx
-import { Lang } from '~/components/lang';
-
-// Default namespace ('common')
-<Lang>sim_title</Lang>
-
-// Specify another namespace (e.g. 'error')
-<Lang ns="error">not_found</Lang>
-
-// Interpolation via the `d` prop
-<Lang ns="password-reset" d={{ handle: username }}>
-  no_account
-</Lang>
-```
-
-`Lang` props:
-- `children`: translation key (string)
-- `ns?`: optional namespace (defaults to `common`)
-- `d?`: optional dictionary for interpolation
-- `kp?`: optional keyPrefix for nested keys
-
-For more complex translations with JSX markup, use the `Trans` component from `react-i18next`:
-
-```tsx
-import { Trans } from 'react-i18next';
-
-<Trans ns="error" i18nKey="GENERIC_ERROR" components={{ 0: <a href="/logout" /> }} />
-```
-
----
-
-Happy sim-building! 🚀
+- Deploy granularity: `npm run deploy:model`, `npm run deploy:public`, and
+  `npm run deploy:proxy` each deploy one piece; `npm run deploy` runs all of them after a
+  build. `npm run reset:proxy` resets the proxy without deploying.
+- The proxy — how the carveout works, when to use a proxy, its files, prerequisite, and
+  local development — is documented in [`proxy/README.md`](proxy/README.md).

@@ -1,0 +1,17 @@
+{
+  "language": "python3",
+  "variables": {
+    "signal": {
+      "save": true
+    },
+    "pitch": {
+      "save": true
+    },
+    "private_note": {
+      "save": true
+    },
+    "ready": {
+      "save": true
+    }
+  }
+}

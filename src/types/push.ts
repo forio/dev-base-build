@@ -26,6 +26,15 @@ export type GroupChannelPush = BaseGroupChannelPush<
     }
 >;
 
+export type FloorChannelContent = {
+  groupKey: string;
+  objectType: 'floor';
+  activity: 'lock' | 'unlock';
+  episodeKey: string;
+  worldKey: string;
+  runKey: string;
+};
+
 export type BaseWorldRunChannelPush<
   State,
   Meta,

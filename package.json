@@ -12,6 +12,8 @@
     "postinstall": "patch-package",
     "deploy:model": "tsx cli/deploy.ts model",
     "deploy:public": "tsx cli/deploy.ts public static",
+    "deploy:proxy": "tsx cli/deploy.ts proxy && tsx cli/reset-proxy.ts",
+    "reset:proxy": "tsx cli/reset-proxy.ts",
     "deploy": "npm-run-all build deploy:*",
     "prepare": "husky"
   },

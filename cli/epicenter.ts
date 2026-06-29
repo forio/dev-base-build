@@ -128,3 +128,34 @@ export const explodeZip = (path: string, token: string, config: Config) => {
     headers: { Authorization: `Bearer ${token}` },
   }).then(normalizeFetchResponse);
 };
+
+/**
+ * The proxy runs as a long-lived process keyed by a deterministic run key
+ * derived from the account + project. `GET run/proxy/key` always returns that
+ * key, whether or not a process is currently running.
+ */
+export const getProxyRunKey = (token: string, config: Config) =>
+  router(config)
+    .withAuthorization(`Bearer ${token}`)
+    .get('run/proxy/key')
+    .then(({ body }) => body as string);
+
+/**
+ * Resets the proxy by stopping its run. Freshly deployed code sits on disk but
+ * the running process keeps serving the old bundle until it is stopped;
+ * Epicenter boots a new process with the latest code on the next request.
+ * A 404 means no proxy was running, which is fine.
+ */
+export const resetProxy = async (token: string, config: Config) => {
+  const proxyKey = await getProxyRunKey(token, config);
+  if (!proxyKey) return;
+
+  try {
+    await router(config)
+      .withAuthorization(`Bearer ${token}`)
+      .delete(`run/${proxyKey}`, { inert: true });
+  } catch (error) {
+    if (error instanceof Fault && error.status === 404) return;
+    throw error;
+  }
+};

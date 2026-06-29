@@ -1,0 +1,5 @@
+{
+  "language": "JAVASCRIPT_20",
+  "minimumLogLevel": "INFO",
+  "inceptionGracePeriodSeconds": 60
+}

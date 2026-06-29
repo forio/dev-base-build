@@ -50,6 +50,21 @@ export default defineConfig(
     },
   },
 
+  // Proxy server: CommonJS Node, with an `epicenter` global injected by the platform
+  {
+    files: ['proxy/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        epicenter: 'writable',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
   {
     rules: {
       '@typescript-eslint/no-unused-vars': [

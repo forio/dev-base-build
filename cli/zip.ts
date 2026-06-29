@@ -50,9 +50,10 @@ export async function createZipBuffer(dirPath: string): Promise<Buffer> {
 
     archive.pipe(memStream);
 
-    // Add the directory contents to the zip root
+    // Add the directory contents to the zip root. env.json is excluded because it
+    // holds local-only secrets that should not be uploaded.
     archive.glob('**', {
-      ignore: ignoreExtension,
+      ignore: ignoreExtension.concat(['**/env.json']),
       cwd: dirPath,
     });
 

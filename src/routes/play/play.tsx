@@ -9,7 +9,8 @@ import { Card } from '~/components/ui/card/card';
 import { useGuardedSession } from '~/query/auth';
 import { useChannel, useChannelEffect } from '~/query/channel';
 import { EpisodeQuery } from '~/query/episode';
-import { GroupChannelPush } from '~/types/push';
+import { PUBLIC_WORLD_VARIABLES, ProxyQuery } from '~/query/proxy';
+import { FloorChannelContent, GroupChannelPush } from '~/types/push';
 import { Lang } from './lang';
 import styles from './play.module.scss';
 
@@ -45,6 +46,11 @@ const Impl = () => {
     scopeBoundary: SCOPE_BOUNDARY.GROUP,
     scopeKey: session.groupKey!,
     pushCategory: PUSH_CATEGORY.GROUP,
+  });
+  const controlChannel = useChannel({
+    scopeBoundary: SCOPE_BOUNDARY.GROUP,
+    scopeKey: session.groupKey!,
+    pushCategory: PUSH_CATEGORY.CONTROL,
   });
 
   /**
@@ -92,10 +98,34 @@ const Impl = () => {
     [queryClient, session]
   );
 
+  const onControlChannelPush = useCallback(
+    (message: FloorChannelContent) => {
+      switch (message.objectType) {
+        case 'floor':
+          return queryClient.invalidateQueries(
+            ProxyQuery.publicWorldVariables({
+              session,
+              episodeKey: message.episodeKey,
+              worldKey: message.worldKey,
+              variableNames: PUBLIC_WORLD_VARIABLES,
+            })
+          );
+        default:
+          console.warn('Unknown control channel message', message);
+      }
+    },
+    [queryClient, session]
+  );
+
   useChannelEffect({
     token: session.token,
     channel: groupChannel,
     callback: onGroupChannelPush,
+  });
+  useChannelEffect({
+    token: session.token,
+    channel: controlChannel,
+    callback: onControlChannelPush,
   });
 
   return (
