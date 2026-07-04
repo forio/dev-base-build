@@ -8,7 +8,7 @@ export const Footer = () => {
   return (
     <footer>
       <span>
-        <Lang>copyright</Lang>
+        <Lang d={{ year: new Date().getFullYear() }}>copyright</Lang>
       </span>
       <span>
         <a className="forio-link" href={forioLink} target="_blank" rel="noreferrer">

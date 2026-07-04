@@ -19,7 +19,7 @@
   "submit": "Submit",
   "ok": "OK",
   "try_again": "Try again",
-  "copyright": "© 2025",
+  "copyright": "© {{year}}",
   "credits": "Credits",
   "forio_link": "Developed in partnership with Forio Simulations",
   "getting_ready": "Getting Things Ready ..."
