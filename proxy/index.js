@@ -1,9 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const epicenterLibs = require('epicenter-libs');
-const { Fault, config, runAdapter } = epicenterLibs;
-const { verify, requireEpisodeWorldAccess } = require('./middleware/verify');
-const { empowerWithProjectToken } = require('./middleware/empowerWithProjectToken');
+const { Fault, SCOPE_BOUNDARY, config, vaultAdapter } = epicenterLibs;
+const { verifyTaskRunner } = require('./middleware/verifyTaskRunner');
 
 const app = express();
 
@@ -38,7 +37,6 @@ try {
     epicenter = {
       proxyConfig: () => ({
         externalPort: 80,
-        apiSharedSecret: env.API_SHARED_SECRET,
         apiHost: config.apiHost,
         accountShortName: config.accountShortName,
         projectShortName: config.projectShortName,
@@ -69,64 +67,52 @@ try {
 
 app.get('/', (req, res) => res.send('Server is running :)'));
 
-const privateEnv = () => {
-  try {
-    return require('./env.json');
-  } catch (_error) {
-    return process.env;
-  }
-};
-
-const completion = async (req, res) => {
-  const { prompt } = req.body;
-  const env = privateEnv();
-  const hasOpenAIKey = Boolean(env.OPENAI_API_KEY);
-
-  return res.status(200).json({
-    data: prompt,
-    hasOpenAIKey,
-  });
-};
-
 /**
- * The variables from a team's world run that same-episode peers may read.
- * Widening the carveout is a deliberate, reviewable edit to this one array;
- * `private_note` is absent here by construction.
+ * The group vault the scheduled task writes into. Deliberately fixed-size — a count and
+ * a timestamp, atomically updated on every fire. A scheduled task that appends to an ever-growing
+ * collection is an anti-pattern: nothing ever prunes it, and every consumer pays for the
+ * whole history to answer "is it still running?". Store the current state; if history
+ * matters, the platform already keeps it (task successes/failures and run history).
  */
-const PUBLIC_WORLD_VARIABLES = ['signal', 'pitch'];
+const TICK_VAULT = 'task-tick';
 
-const readPublicWorldVariables = async (req, res) => {
-  const { world } = req;
-  const { variableNames } = req.params;
+const recordTick = async (req, res) => {
+  const scopeKey = req.body?.scopeKey;
+  if (!scopeKey) return res.status(400).json({ message: 'scopeKey required.' });
+
+  const scope = { scopeBoundary: SCOPE_BOUNDARY.GROUP, scopeKey };
+  const authorization = req.taskAuthorization;
 
   try {
-    const requestedVariables = variableNames.split(';').filter(Boolean);
-
-    if (!requestedVariables.length) {
-      return res.status(400).json({ error: 'No public variables requested.' });
-    }
-
-    if (
-      requestedVariables.some(
-        (variableName) => !PUBLIC_WORLD_VARIABLES.includes(variableName)
-      )
-    ) {
-      return res.status(404).json({ error: 'Public variable not found.' });
-    }
-
-    if (!world.runKey) {
-      return res.status(404).json({ error: 'World has no associated run.' });
-    }
-
-    const variables = await runAdapter.getVariables(world.runKey, requestedVariables, {
-      authorization: req.projectAuthorization,
+    const vault = await vaultAdapter.define(TICK_VAULT, scope, {
+      items: {
+        set: { lastTickAt: new Date().toISOString() },
+        inc: { tickCount: 1 },
+      },
+      readLock: 'PARTICIPANT',
+      writeLock: 'FACILITATOR',
+      mutationStrategy: 'ALLOW',
+      authorization,
     });
 
-    return res.status(200).json(variables);
+    return res.status(200).json({ tickCount: vault?.items?.tickCount });
   } catch (error) {
     if (error instanceof Fault) {
+      /**
+       * The status returned here is task control flow: any 4xx permanently cancels
+       * the calling task, while a 5xx lets it keep firing on schedule. Faults pass
+       * through by default — add a case to translate a 4xx that is genuinely
+       * recoverable for this operation into a 5xx.
+       */
       const { status, message, information } = error;
-      return res.status(status ?? 500).json({ message, information });
+      switch (status) {
+        /**
+         * case 404:
+         *   return res.status(503).json({ message, information });
+         */
+        default:
+          return res.status(status ?? 500).json({ message, information });
+      }
     }
     return res
       .status(500)
@@ -134,15 +120,14 @@ const readPublicWorldVariables = async (req, res) => {
   }
 };
 
-app.get(
-  '/world/:episodeKey/:worldKey/public/:variableNames',
-  verify(epicenter),
-  requireEpisodeWorldAccess,
-  empowerWithProjectToken(epicenter),
-  readPublicWorldVariables
-);
-
-app.post('/completion', verify(epicenter), completion);
+/**
+ * The target of the recurring task the facilitator client schedules (see
+ * `src/query/task.ts` — the payload's `target: 'PROXY'` routes the fire to this proxy).
+ * The caller is Epicenter's task runner, which signs each fire with a platform-issued
+ * ACCOUNT session token; `verifyTaskRunner` verifies that token and requires the
+ * account-typed principal for this account before any privileged work happens.
+ */
+app.post('/tick', verifyTaskRunner(epicenter), recordTick);
 
 function main() {
   const port = epicenter.proxyConfig().externalPort;

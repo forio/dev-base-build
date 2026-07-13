@@ -9,8 +9,7 @@ import { Card } from '~/components/ui/card/card';
 import { useGuardedSession } from '~/query/auth';
 import { useChannel, useChannelEffect } from '~/query/channel';
 import { EpisodeQuery } from '~/query/episode';
-import { PUBLIC_WORLD_VARIABLES, ProxyQuery } from '~/query/proxy';
-import { FloorChannelContent, GroupChannelPush } from '~/types/push';
+import { GroupChannelPush } from '~/types/push';
 import { Lang } from './lang';
 import styles from './play.module.scss';
 
@@ -47,11 +46,6 @@ const Impl = () => {
     scopeKey: session.groupKey!,
     pushCategory: PUSH_CATEGORY.GROUP,
   });
-  const controlChannel = useChannel({
-    scopeBoundary: SCOPE_BOUNDARY.GROUP,
-    scopeKey: session.groupKey!,
-    pushCategory: PUSH_CATEGORY.CONTROL,
-  });
 
   /**
    * Requires `allowChannel: true` for group.
@@ -62,56 +56,8 @@ const Impl = () => {
       switch (message.content.objectType) {
         case 'episode':
           return queryClient.invalidateQueries(EpisodeQuery.current({ session }));
-        // case 'assignment': {
-        //   const currentEpisode = queryClient.getQueryData<EpisodeReadOutView>(
-        //     EpisodeQuery.current({ session }).queryKey
-        //   );
-        //   if (!currentEpisode) return undefined;
-
-        //   const pushedWorldsForCurrentEpisode = (message.content.worlds ?? []).filter(
-        //     isWorldInEpisode(currentEpisode)
-        //   );
-
-        //   const myCachedWorld = queryClient.getQueryData<WorldReadOutView>(
-        //     WorldQuery.bySessionPerEpisode({
-        //       session,
-        //       episodeName: currentEpisode.name,
-        //     }).queryKey
-        //   );
-
-        //   const placementChangeReason = detectPlacementChangeFromPush({
-        //     pushedWorlds: pushedWorldsForCurrentEpisode,
-        //     cachedWorld: myCachedWorld,
-        //     userKey: session.userKey,
-        //   });
-
-        //   if (placementChangeReason) {
-        //     void regenerateSession().catch(console.error);
-        //   }
-
-        //   return undefined;
-        // }
         default:
           console.warn('Unknown group channel message', message);
-      }
-    },
-    [queryClient, session]
-  );
-
-  const onControlChannelPush = useCallback(
-    (message: FloorChannelContent) => {
-      switch (message.objectType) {
-        case 'floor':
-          return queryClient.invalidateQueries(
-            ProxyQuery.publicWorldVariables({
-              session,
-              episodeKey: message.episodeKey,
-              worldKey: message.worldKey,
-              variableNames: PUBLIC_WORLD_VARIABLES,
-            })
-          );
-        default:
-          console.warn('Unknown control channel message', message);
       }
     },
     [queryClient, session]
@@ -121,11 +67,6 @@ const Impl = () => {
     token: session.token,
     channel: groupChannel,
     callback: onGroupChannelPush,
-  });
-  useChannelEffect({
-    token: session.token,
-    channel: controlChannel,
-    callback: onControlChannelPush,
   });
 
   return (
