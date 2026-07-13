@@ -1,11 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import {
-  Router,
-  SCOPE_BOUNDARY,
-  type UserSession,
-  taskAdapter,
-  vaultAdapter,
-} from 'epicenter-libs';
+import { Router, SCOPE_BOUNDARY, taskAdapter, vaultAdapter } from 'epicenter-libs';
 import { type TaskReadOutView, type TickState } from '~/types/task';
 
 /**
@@ -14,6 +8,9 @@ import { type TaskReadOutView, type TickState } from '~/types/task';
  * session. The proxy is involved only as the task's TARGET: the scheduled fire POSTs to
  * the proxy's `/tick` route (see `proxy/index.js`), which is the one capability a client
  * cannot host itself.
+ *
+ * Task and vault are both scoped to an EPISODE, so each episode carries its own
+ * independent task and tick state; starting a new episode is a clean slate.
  */
 
 const TASK_NAME = 'task-tick';
@@ -38,12 +35,12 @@ const FAIL_SAFE_MS = 2 * 60 * 60 * 1000;
 
 const TERMINAL_STATUSES = ['cancelled', 'terminated'];
 
-const groupScope = (session: UserSession) => ({
-  scopeBoundary: SCOPE_BOUNDARY.GROUP,
-  scopeKey: session.groupKey!,
+const episodeScope = (episodeKey: string) => ({
+  scopeBoundary: SCOPE_BOUNDARY.EPISODE,
+  scopeKey: episodeKey,
 });
 
-const demoTasks = async (scope: ReturnType<typeof groupScope>) => {
+const demoTasks = async (scope: ReturnType<typeof episodeScope>) => {
   const page = await new Router()
     .withSearchParams({ filter: `task.scopeKey=${scope.scopeKey}` })
     .get('/task/search')
@@ -52,8 +49,8 @@ const demoTasks = async (scope: ReturnType<typeof groupScope>) => {
   return values.filter((task) => task.name?.startsWith(TASK_NAME));
 };
 
-const active = ({ session }: { session: UserSession }) => {
-  const scope = groupScope(session);
+const active = ({ episodeKey }: { episodeKey: string }) => {
+  const scope = episodeScope(episodeKey);
   return queryOptions({
     queryKey: ['task', 'active', scope],
     queryFn: async () => {
@@ -66,8 +63,8 @@ const active = ({ session }: { session: UserSession }) => {
   });
 };
 
-const ticks = ({ session }: { session: UserSession }) => {
-  const scope = groupScope(session);
+const ticks = ({ episodeKey }: { episodeKey: string }) => {
+  const scope = episodeScope(episodeKey);
   return queryOptions({
     queryKey: ['task', 'ticks', scope],
     queryFn: async () => {
@@ -78,12 +75,12 @@ const ticks = ({ session }: { session: UserSession }) => {
   });
 };
 
-const stop = async (session: UserSession) => {
-  const tasks = await demoTasks(groupScope(session));
+const stop = async (episodeKey: string) => {
+  const tasks = await demoTasks(episodeScope(episodeKey));
   await Promise.all(tasks.map((task) => taskAdapter.destroy(task.taskKey)));
 };
 
-const start = (session: UserSession, cron: string) => {
+const start = (episodeKey: string, cron: string) => {
   // The runner constructs the fire URL itself as
   // {host}{target-path}/{account}/{project}{url} — `url` must stay relative, and
   // target 'PROXY' aims it at this project's proxy server.
@@ -91,23 +88,18 @@ const start = (session: UserSession, cron: string) => {
     method: 'POST',
     url: '/tick',
     target: 'PROXY',
-    body: { scopeKey: session.groupKey },
+    timeoutSeconds: 10,
+    body: { episodeKey },
     headers: { 'Content-Type': 'application/json' },
   };
   // Task creation is idempotent by scope+name — the platform returns an existing
   // same-named task unmodified — so names carry a timestamp.
   return taskAdapter.create(
-    groupScope(session),
+    episodeScope(episodeKey),
     `${TASK_NAME}-${Date.now()}`,
     payload,
     { objectType: 'cron', value: cron },
-    {
-      // Typed as number upstream, but the wire format is an ISO-8601 datetime
-      // string (the platform parses it to epoch millis on the way in).
-      failSafeTermination: new Date(
-        Date.now() + FAIL_SAFE_MS
-      ).toISOString() as unknown as number,
-    }
+    { failSafeTermination: new Date(Date.now() + FAIL_SAFE_MS).toISOString() }
   ) as Promise<TaskReadOutView>;
 };
 

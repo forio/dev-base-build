@@ -27,11 +27,10 @@ const IntervalSelect = ({
   </label>
 );
 
-const TaskPanel = () => {
-  const session = useGuardedSession();
+const TaskPanel = ({ episodeKey }: { episodeKey: string }) => {
   const queryClient = useQueryClient();
-  const { data: task } = useQuery(TaskQuery.active({ session }));
-  const { data: ticks } = useQuery(TaskQuery.ticks({ session }));
+  const { data: task } = useQuery(TaskQuery.active({ episodeKey }));
+  const { data: ticks } = useQuery(TaskQuery.ticks({ episodeKey }));
 
   const [cron, setCron] = useState<string>(INTERVALS[0].cron);
   const [busy, setBusy] = useState(false);
@@ -41,11 +40,11 @@ const TaskPanel = () => {
     setBusy(true);
     setError(undefined);
     try {
-      await TaskQuery.stop(session);
+      await TaskQuery.stop(episodeKey);
       await action?.();
       await Promise.all([
-        queryClient.invalidateQueries(TaskQuery.active({ session })),
-        queryClient.invalidateQueries(TaskQuery.ticks({ session })),
+        queryClient.invalidateQueries(TaskQuery.active({ episodeKey })),
+        queryClient.invalidateQueries(TaskQuery.ticks({ episodeKey })),
       ]);
     } catch (caught) {
       setError(caught instanceof Error ? caught : new Error(String(caught)));
@@ -58,9 +57,10 @@ const TaskPanel = () => {
     <Card className={styles.taskPanel}>
       <h2>Scheduled task</h2>
       <p className={styles.note}>
-        Schedules a recurring task that POSTs the proxy&rsquo;s <code>/tick</code> route;
-        each fire overwrites the tick state below. The platform schedules nothing sooner
-        than 5 minutes out, so the first tick lands ~5 minutes after the task is created.
+        Schedules a recurring task, scoped to the selected episode, that POSTs the
+        proxy&rsquo;s <code>/tick</code> route; each fire overwrites the episode&rsquo;s
+        tick state below. The platform schedules nothing sooner than 5 minutes out, so the
+        first tick lands ~5 minutes after the task is created.
       </p>
 
       {error && (
@@ -100,7 +100,7 @@ const TaskPanel = () => {
       ) : (
         <div className={styles.controlRow}>
           <IntervalSelect value={cron} onChange={setCron} />
-          <Button disabled={busy} onClick={() => perform(() => TaskQuery.start(session, cron))}>
+          <Button disabled={busy} onClick={() => perform(() => TaskQuery.start(episodeKey, cron))}>
             Start task
           </Button>
         </div>
@@ -161,7 +161,7 @@ export const Route = () => {
         </Button>
       </div>
 
-      <TaskPanel />
+      <TaskPanel episodeKey={selectedEpisode.episodeKey} />
     </div>
   );
 };

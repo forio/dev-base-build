@@ -9,7 +9,7 @@ hosts it at `/proxy/<account>/<project>/tick` and calls it on the task's schedul
    `url: '/tick'`.
 2. Epicenter sends each request with a platform-issued account credential.
 3. `verifyTaskRunner` verifies the credential and account.
-4. `/tick` creates or updates the group's `task-tick` vault in one atomic request.
+4. `/tick` creates or updates the episode's `task-tick` vault in one atomic request.
 
 The first fire creates the vault. Later fires increment `tickCount` and replace
 `lastTickAt`. Participants may read the vault directly; they do not need a proxy read
@@ -21,7 +21,7 @@ Request body:
 
 ```json
 {
-  "scopeKey": "<groupKey>"
+  "episodeKey": "<episodeKey>"
 }
 ```
 
@@ -33,7 +33,7 @@ Success response:
 }
 ```
 
-The `scopeKey` is stored in the task payload and replayed on every fire.
+The `episodeKey` is stored in the task payload and replayed on every fire.
 
 ## Error handling
 
@@ -52,8 +52,9 @@ Unexpected non-Epicenter errors return 500.
 
 ## Timeout behavior
 
-The task request has a five-second socket timeout, and proxy startup uses part of that
-time. A cold proxy may finish its write after Epicenter has recorded a timeout. Therefore:
+Epicenter waits `payload.timeoutSeconds` (required at task creation, integer 1–30) for
+each fire's response, and proxy startup uses part of that time. A cold proxy may finish
+its write after Epicenter has recorded a timeout. Therefore:
 
 - keep the operation atomic;
 - avoid read-then-write updates;

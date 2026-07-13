@@ -68,7 +68,7 @@ try {
 app.get('/', (req, res) => res.send('Server is running :)'));
 
 /**
- * The group vault the scheduled task writes into. Deliberately fixed-size — a count and
+ * The episode vault the scheduled task writes into. Deliberately fixed-size — a count and
  * a timestamp, atomically updated on every fire. A scheduled task that appends to an ever-growing
  * collection is an anti-pattern: nothing ever prunes it, and every consumer pays for the
  * whole history to answer "is it still running?". Store the current state; if history
@@ -77,10 +77,10 @@ app.get('/', (req, res) => res.send('Server is running :)'));
 const TICK_VAULT = 'task-tick';
 
 const recordTick = async (req, res) => {
-  const scopeKey = req.body?.scopeKey;
-  if (!scopeKey) return res.status(400).json({ message: 'scopeKey required.' });
+  const episodeKey = req.body?.episodeKey;
+  if (!episodeKey) return res.status(400).json({ message: 'episodeKey required.' });
 
-  const scope = { scopeBoundary: SCOPE_BOUNDARY.GROUP, scopeKey };
+  const scope = { scopeBoundary: SCOPE_BOUNDARY.EPISODE, scopeKey: episodeKey };
   const authorization = req.taskAuthorization;
 
   try {

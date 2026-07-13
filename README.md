@@ -1,13 +1,15 @@
 # Scheduled task example
 
 This project shows how to create an Epicenter task that calls a project proxy on a
-recurring schedule. Each call to `POST /tick` updates a group-scoped vault, giving the
+recurring schedule. Each call to `POST /tick` updates an episode-scoped vault, giving the
 facilitator page a visible count and timestamp.
 
 ## How it works
 
-1. A facilitator chooses a schedule and creates the task directly through the Task API.
-2. The task payload uses `target: 'PROXY'` and `url: '/tick'`.
+1. A facilitator chooses a schedule and creates the task directly through the Task API,
+   scoped to the selected episode.
+2. The task payload uses `target: 'PROXY'` and `url: '/tick'`, with the episode key in
+   the body.
 3. Epicenter calls the deployed proxy with a platform-issued credential on each fire.
 4. The proxy verifies that credential and atomically updates the vault.
 
@@ -21,9 +23,10 @@ client because those operations already accept a facilitator session.
 - **A 4xx response cancels the task.** Return 4xx only when another attempt cannot help.
   Return 5xx for a condition that may recover. The proxy's `switch` statement is where a
   known, recoverable 4xx can be translated to 5xx; by default it preserves the status.
-- **A proxy cold start counts against a five-second socket timeout.** Epicenter may record
-  a failed fire even if the proxy finishes its work afterward. Keep the target operation
-  atomic, and do not assume that a timeout means no effect occurred.
+- **Each fire waits `payload.timeoutSeconds` for a response (required, integer 1–30).**
+  A proxy cold start spends part of that window booting, so Epicenter may record a failed
+  fire even if the proxy finishes its work afterward. Keep the target operation atomic,
+  and do not assume that a timeout means no effect occurred.
 
 See [proxy/README.md](proxy/README.md) for the route and security details.
 
