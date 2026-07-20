@@ -155,6 +155,12 @@ npm run deploy:model
 > placeholders. Both are applied and clearly labeled in `tools/build_template.py`. Chart
 > value axes carry their own number format (`"$"#,##0`) in the template — the service
 > keeps the template's chart/axis formatting and only swaps in the data.
+>
+> **One whole-box token per line.** A `{{token}}` is only substituted cleanly when it is
+> the *entire* contents of its text box. Two tokens in one paragraph, or a token mixed
+> with static text, get corrupted (epicenter-1553). So compose any label/separator/multi-
+> value line in `buildDocument()` and pass it as a single parameter (see `summary` and
+> `generated`) rather than stitching tokens together inside the template.
 
 ### Swapping to the official adapter
 
