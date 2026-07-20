@@ -34,6 +34,7 @@ from pptx.enum.chart import (
     XL_CHART_TYPE,
     XL_LEGEND_POSITION,
     XL_TICK_LABEL_POSITION,
+    XL_TICK_MARK,
 )
 from pptx.chart.data import CategoryChartData
 from pptx.oxml.ns import qn
@@ -342,9 +343,14 @@ lchart.category_axis.tick_labels.font.size = Pt(11)
 # Keep the year labels pinned to the bottom even when profit goes negative,
 # instead of riding along the x-axis where it crosses zero.
 lchart.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.LOW
-# Move the category axis line + tick marks to the bottom too: have the value
-# axis cross at its minimum rather than at zero.
+# `crosses = MINIMUM` would drop the axis to the bottom, but the service rebuilds
+# the value axis to fit the data and discards that setting — so the crossing
+# resets to zero on the generated deck. Instead, remove the category-axis tick
+# marks entirely: the labels are already pinned low, so nothing rides the zero
+# line. (Tick-mark settings live on the category axis and are preserved.)
 lchart.value_axis.crosses = XL_AXIS_CROSSES.MINIMUM
+lchart.category_axis.major_tick_mark = XL_TICK_MARK.NONE
+lchart.category_axis.minor_tick_mark = XL_TICK_MARK.NONE
 
 # Pie chart
 pd = CategoryChartData()
