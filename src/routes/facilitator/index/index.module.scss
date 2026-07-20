@@ -1,19 +1,141 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
 }
 
 .selectEpisode {
   display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  select {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--gray-7, #cbd5e1);
+    background: var(--color-panel, #fff);
+  }
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  color: var(--red-11, #b91c1c);
+  border: 1px solid var(--red-7, #fca5a5);
+  background: var(--red-2, #fef2f2);
+}
+
+.empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+
+  p {
+    margin: 0.25rem 0;
+  }
+}
+
+.muted {
+  color: var(--gray-10, #64748b);
+  font-size: 0.9rem;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--gray-5, #e2e8f0);
+}
+
+.tab,
+.tabActive {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-10, #64748b);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tabActive {
+  color: var(--accent-11, #2563eb);
+  border-bottom-color: var(--accent-9, #2563eb);
+}
+
+/* ── Panels ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  align-items: flex-end;
-  align-self: center;
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.kpiLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--gray-10, #64748b);
+}
+
+.kpiValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-12, #0f172a);
+}
+
+.chartCard {
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+  }
+}
+
+.marketGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
 }

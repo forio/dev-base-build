@@ -57,7 +57,7 @@ const RANGES = [
   'Step',
 ] as const;
 
-type Variables = { Step: number } & {
+export type Variables = { Step: number } & {
   [K in Exclude<(typeof RANGES)[number], 'Step'>]: number[];
 };
 
