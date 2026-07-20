@@ -131,10 +131,10 @@ with the `name` fields in `buildDocument()`:
 | Chart (line) | `ProfitOverTime` | slide 5 |
 | Chart (pie) | `RevenueShare` | slide 5 |
 
-Text placeholders use `${token}` syntax and are filled from each slide's
-`environment.parameters`: `${title}`, `${subtitle}`, `${groupName}`, `${episodeLabel}`,
-`${participantCount}`, `${generatedOn}`, `${topPerformer}`, `${topProfit}`,
-`${averageProfit}`.
+Text placeholders use `{{token}}` (mustache) syntax and are filled from
+`environment.parameters`: `{{title}}`, `{{subtitle}}`, `{{groupName}}`,
+`{{episodeLabel}}`, `{{participantCount}}`, `{{generatedOn}}`, `{{topPerformer}}`,
+`{{topProfit}}`, `{{averageProfit}}`.
 
 The template is regenerated from `tools/build_template.py` (kept in the repo so the deck
 design is reviewable and reproducible). Re-run it and re-deploy to restyle the deck:
@@ -150,14 +150,11 @@ npm run deploy:model
 > `pie`. Numeric points are wrapped as `{ n: value }`. This is reflected in the
 > `SeriesShadow` types in `src/adapters/powerpoint.ts` and in `buildDocument()`.
 >
-> **⚠️ Doc-handoff note — verify the template conventions against a live server.** The
-> exact placeholder syntax the service uses to *locate shapes in the template* was not
-> published at the time of writing, so this example assumes **shape-name matching for
-> charts/tables** and **`${token}` substitution for text**. Both are applied and clearly
-> labeled in `tools/build_template.py`. Run one real export and confirm the deck fills as
-> expected; if the service expects different tokens (e.g. `{{token}}` or alt-text
-> matching), adjust the template generator — the `DocumentShadow` in `buildDocument()`
-> should not need to change.
+> **Template conventions (verified against a live export).** Charts, tables, and pictures
+> are matched by **shape name**; text is substituted with **`{{token}}` (mustache)**
+> placeholders. Both are applied and clearly labeled in `tools/build_template.py`. Chart
+> value axes carry their own number format (`"$"#,##0`) in the template — the service
+> keeps the template's chart/axis formatting and only swaps in the data.
 
 ### Swapping to the official adapter
 

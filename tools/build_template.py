@@ -12,12 +12,12 @@ below MUST match the `name` fields sent in the DocumentShadow
     Chart   'ProfitOverTime'        (line)
     Chart   'RevenueShare'          (pie)
 
-Text placeholders use ${token} syntax and are replaced from
+Text placeholders use {{token}} syntax and are replaced from
 `environment.parameters`:
 
-    ${title} ${subtitle} ${groupName} ${episodeLabel}
-    ${participantCount} ${generatedOn}
-    ${topPerformer} ${topProfit} ${averageProfit}
+    {{title}} {{subtitle}} {{groupName}} {{episodeLabel}}
+    {{participantCount}} {{generatedOn}}
+    {{topPerformer}} {{topProfit}} {{averageProfit}}
 
 All slide DESIGN lives here; the placeholder data below is only so the template
 looks presentable on its own.
@@ -27,7 +27,11 @@ from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
+from pptx.enum.chart import (
+    XL_CHART_TYPE,
+    XL_LEGEND_POSITION,
+    XL_TICK_LABEL_POSITION,
+)
 from pptx.chart.data import CategoryChartData
 from pptx.oxml.ns import qn
 
@@ -122,19 +126,19 @@ set_para(eyebrow.paragraphs[0], "EPICENTER SIMULATION DEBRIEF", 14, ORANGE,
          bold=True, font=BODY_FONT)
 
 title_tb, title = textbox(s, 0.9, 2.6, 11.5, 1.6)
-set_para(title.paragraphs[0], "${title}", 52, WHITE, bold=True, font=TITLE_FONT)
+set_para(title.paragraphs[0], "{{title}}", 52, WHITE, bold=True, font=TITLE_FONT)
 
 sub_tb, sub = textbox(s, 0.9, 4.15, 11.5, 0.8)
-set_para(sub.paragraphs[0], "${subtitle}", 24, RGBColor(0xCA, 0xDC, 0xFC),
+set_para(sub.paragraphs[0], "{{subtitle}}", 24, RGBColor(0xCA, 0xDC, 0xFC),
          font=BODY_FONT)
 
 meta_tb, meta = textbox(s, 0.9, 5.5, 11.5, 0.6)
 set_para(meta.paragraphs[0],
-         "${groupName}   •   ${episodeLabel}   •   ${participantCount} players",
+         "{{groupName}}   •   {{episodeLabel}}   •   {{participantCount}} players",
          16, RGBColor(0x9F, 0xB3, 0xCC), font=BODY_FONT)
 
 foot_tb, foot = textbox(s, 0.9, 6.75, 11.5, 0.4)
-set_para(foot.paragraphs[0], "Generated ${generatedOn}", 11, MUTED, font=BODY_FONT)
+set_para(foot.paragraphs[0], "Generated {{generatedOn}}", 11, MUTED, font=BODY_FONT)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -189,7 +193,7 @@ for i, (num, head, body, col) in enumerate(cards):
     set_para(cb.paragraphs[0], body, 14, INK, font=BODY_FONT, spacing=1.15)
 
 _, foot2 = textbox(s, 0.9, 6.95, 11.5, 0.35)
-set_para(foot2.paragraphs[0], "Generated ${generatedOn}", 11, MUTED,
+set_para(foot2.paragraphs[0], "Generated {{generatedOn}}", 11, MUTED,
          font=BODY_FONT)
 
 
@@ -203,9 +207,9 @@ _, h3 = textbox(s, 0.9, 0.6, 11.5, 0.9)
 set_para(h3.paragraphs[0], "Final Standings", 40, NAVY, bold=True,
          font=TITLE_FONT)
 
-kpis = [("WINNER", "${topPerformer}", ORANGE),
-        ("WINNING PROFIT", "${topProfit}", BLUE),
-        ("AVERAGE PROFIT", "${averageProfit}", GREEN)]
+kpis = [("WINNER", "{{topPerformer}}", ORANGE),
+        ("WINNING PROFIT", "{{topProfit}}", BLUE),
+        ("AVERAGE PROFIT", "{{averageProfit}}", GREEN)]
 kw, kgap = 3.7, 0.42
 for i, (lab, val, col) in enumerate(kpis):
     x = 0.9 + i * (kw + kgap)
@@ -286,6 +290,8 @@ for i, pt in enumerate(plot.series[0].points):
     pt.format.fill.fore_color.rgb = SERIES[i % len(SERIES)]
 chart.value_axis.has_major_gridlines = True
 chart.value_axis.tick_labels.font.size = Pt(11)
+chart.value_axis.tick_labels.number_format = '"$"#,##0'
+chart.value_axis.tick_labels.number_format_is_linked = False
 chart.category_axis.tick_labels.font.size = Pt(12)
 
 
@@ -324,7 +330,12 @@ for i, srs in enumerate(lchart.plots[0].series):
     srs.format.line.color.rgb = SERIES[i % len(SERIES)]
     srs.format.line.width = Pt(2.25)
 lchart.value_axis.tick_labels.font.size = Pt(10)
+lchart.value_axis.tick_labels.number_format = '"$"#,##0'
+lchart.value_axis.tick_labels.number_format_is_linked = False
 lchart.category_axis.tick_labels.font.size = Pt(11)
+# Keep the year labels pinned to the bottom even when profit goes negative,
+# instead of riding along the x-axis where it crosses zero.
+lchart.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.LOW
 
 # Pie chart
 pd = CategoryChartData()
