@@ -13,10 +13,12 @@ below MUST match the `name` fields sent in the DocumentShadow
     Chart   'RevenueShare'          (pie)
 
 Text placeholders use {{token}} syntax and are replaced from
-`environment.parameters`:
+`environment.parameters`. IMPORTANT: the service only substitutes a token
+cleanly when it is the entire contents of its text box — a token in the middle
+of a paragraph, or two tokens in one paragraph, get corrupted (epicenter-1553).
+So composite lines are pre-built in buildDocument() and passed as ONE token:
 
-    {{title}} {{subtitle}} {{groupName}} {{episodeLabel}}
-    {{participantCount}} {{generatedOn}}
+    {{title}} {{subtitle}} {{summary}} {{generated}}
     {{topPerformer}} {{topProfit}} {{averageProfit}}
 
 All slide DESIGN lives here; the placeholder data below is only so the template
@@ -28,6 +30,7 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.chart import (
+    XL_AXIS_CROSSES,
     XL_CHART_TYPE,
     XL_LEGEND_POSITION,
     XL_TICK_LABEL_POSITION,
@@ -132,13 +135,17 @@ sub_tb, sub = textbox(s, 0.9, 4.15, 11.5, 0.8)
 set_para(sub.paragraphs[0], "{{subtitle}}", 24, RGBColor(0xCA, 0xDC, 0xFC),
          font=BODY_FONT)
 
+# NOTE: The service only replaces a token cleanly when it is the WHOLE run/
+# paragraph. Multiple tokens (or a token mixed with static text) in one
+# paragraph corrupt the replacement (epicenter-1553). So each dynamic line is a
+# single whole-box token, and any composition (labels, separators) is done in
+# buildDocument() and passed as one pre-formatted parameter.
 meta_tb, meta = textbox(s, 0.9, 5.5, 11.5, 0.6)
-set_para(meta.paragraphs[0],
-         "{{groupName}}   •   {{episodeLabel}}   •   {{participantCount}} players",
-         16, RGBColor(0x9F, 0xB3, 0xCC), font=BODY_FONT)
+set_para(meta.paragraphs[0], "{{summary}}", 16, RGBColor(0x9F, 0xB3, 0xCC),
+         font=BODY_FONT)
 
 foot_tb, foot = textbox(s, 0.9, 6.75, 11.5, 0.4)
-set_para(foot.paragraphs[0], "Generated {{generatedOn}}", 11, MUTED, font=BODY_FONT)
+set_para(foot.paragraphs[0], "{{generated}}", 11, MUTED, font=BODY_FONT)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -193,8 +200,7 @@ for i, (num, head, body, col) in enumerate(cards):
     set_para(cb.paragraphs[0], body, 14, INK, font=BODY_FONT, spacing=1.15)
 
 _, foot2 = textbox(s, 0.9, 6.95, 11.5, 0.35)
-set_para(foot2.paragraphs[0], "Generated {{generatedOn}}", 11, MUTED,
-         font=BODY_FONT)
+set_para(foot2.paragraphs[0], "{{generated}}", 11, MUTED, font=BODY_FONT)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -336,6 +342,9 @@ lchart.category_axis.tick_labels.font.size = Pt(11)
 # Keep the year labels pinned to the bottom even when profit goes negative,
 # instead of riding along the x-axis where it crosses zero.
 lchart.category_axis.tick_label_position = XL_TICK_LABEL_POSITION.LOW
+# Move the category axis line + tick marks to the bottom too: have the value
+# axis cross at its minimum rather than at zero.
+lchart.value_axis.crosses = XL_AXIS_CROSSES.MINIMUM
 
 # Pie chart
 pd = CategoryChartData()

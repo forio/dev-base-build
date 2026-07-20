@@ -159,16 +159,17 @@ export const buildDocument = ({
     output: `bike-shop-results-${episodeLabel.replace(/\W+/g, '-')}.pptx`,
     slides: [
       // ── Slide 1: title ──────────────────────────────────────────────
+      // NOTE: The service only substitutes a token that is the *entire* text of
+      // its box; multiple tokens in one line get corrupted (epicenter-1553).
+      // So we compose the summary/footer lines here and pass each as one token.
       {
         number: 1,
         environment: {
           parameters: {
             title: 'Bike Shop Challenge',
             subtitle: 'Facilitator Results Debrief',
-            groupName: session.groupName ?? '',
-            episodeLabel,
-            participantCount: String(participantCount),
-            generatedOn,
+            summary: `${session.groupName ?? ''}  •  ${episodeLabel}  •  ${participantCount} players`,
+            generated: `Generated ${generatedOn}`,
           },
         },
       },
@@ -176,7 +177,7 @@ export const buildDocument = ({
       {
         number: 2,
         environment: {
-          parameters: { generatedOn },
+          parameters: { generated: `Generated ${generatedOn}` },
         },
       },
       // ── Slide 3: final standings (TABLE + KPI text) ─────────────────
