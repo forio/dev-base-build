@@ -144,14 +144,20 @@ python3 tools/build_template.py model/results-template.pptx
 npm run deploy:model
 ```
 
-> **⚠️ Doc-handoff note — verify against a live server.** The exact placeholder syntax
-> the PowerPoint service uses to locate shapes was not published at the time of writing,
-> so this example assumes **shape-name matching for charts/tables** and **`${token}`
-> substitution for text**. Both are applied and clearly labeled in
-> `tools/build_template.py`. Before publishing docs, run one real export and confirm the
-> service honours these conventions; if it expects different tokens (e.g. `{{token}}` or
-> alt-text matching), adjust the template generator — the `DocumentShadow` in
-> `buildDocument()` should not need to change.
+> **Chart series use Jackson wrapper-object form.** Confirmed against the live v4
+> service: each chart series is keyed by its type rather than carrying an `objectType`
+> discriminator — e.g. `{ bar: { name, data: [{ n: 10 }] } }`, and likewise `line` and
+> `pie`. Numeric points are wrapped as `{ n: value }`. This is reflected in the
+> `SeriesShadow` types in `src/adapters/powerpoint.ts` and in `buildDocument()`.
+>
+> **⚠️ Doc-handoff note — verify the template conventions against a live server.** The
+> exact placeholder syntax the service uses to *locate shapes in the template* was not
+> published at the time of writing, so this example assumes **shape-name matching for
+> charts/tables** and **`${token}` substitution for text**. Both are applied and clearly
+> labeled in `tools/build_template.py`. Run one real export and confirm the deck fills as
+> expected; if the service expects different tokens (e.g. `{{token}}` or alt-text
+> matching), adjust the template generator — the `DocumentShadow` in `buildDocument()`
+> should not need to change.
 
 ### Swapping to the official adapter
 

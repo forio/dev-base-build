@@ -221,9 +221,10 @@ export const buildDocument = ({
               categories: standings.map((row) => row.name),
               series: [
                 {
-                  objectType: 'bar' as const,
-                  name: 'Total Profit',
-                  data: standings.map((row) => ({ n: row.totalProfit })),
+                  bar: {
+                    name: 'Total Profit',
+                    data: standings.map((row) => ({ n: row.totalProfit })),
+                  },
                 },
               ],
             },
@@ -239,9 +240,10 @@ export const buildDocument = ({
               name: 'ProfitOverTime',
               categories: years,
               series: standings.map((row) => ({
-                objectType: 'line' as const,
-                name: row.name,
-                data: row.profitByYear.map((n) => ({ n })),
+                line: {
+                  name: row.name,
+                  data: row.profitByYear.map((val) => ({ n: val })),
+                },
               })),
             },
             {
@@ -249,9 +251,10 @@ export const buildDocument = ({
               categories: standings.map((row) => row.name),
               series: [
                 {
-                  objectType: 'pie' as const,
-                  name: 'Total Revenue',
-                  data: standings.map((row) => ({ n: row.totalRevenue })),
+                  pie: {
+                    name: 'Total Revenue',
+                    data: standings.map((row) => ({ n: row.totalRevenue })),
+                  },
                 },
               ],
             },

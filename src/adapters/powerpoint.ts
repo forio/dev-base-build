@@ -52,28 +52,24 @@ export interface XYDataPoint {
 // Chart Series
 // ──────────────────────────────────────────────
 
-export interface BarSeriesShadow {
-  objectType: 'bar';
+interface SeriesItem {
   name?: string;
   data?: NDataPoint[] | null;
+}
+export interface BarSeriesShadow {
+  bar: SeriesItem;
 }
 
 export interface AreaSeriesShadow {
-  objectType: 'area';
-  name?: string;
-  data?: NDataPoint[] | null;
+  area: SeriesItem;
 }
 
 export interface LineSeriesShadow {
-  objectType: 'line';
-  name?: string;
-  data?: NDataPoint[] | null;
+  line: SeriesItem;
 }
 
 export interface PieSeriesShadow {
-  objectType: 'pie';
-  name?: string;
-  data?: NDataPoint[] | null;
+  pie: SeriesItem;
 }
 
 export interface ScatterSeriesShadow {
