@@ -19,7 +19,7 @@ const GraftReadOutSchema = z.looseObject({
 
 const BaseUserReadOutSchema = z.looseObject({
   handle: z.string(),
-  lastLogin: z.string(),
+  lastLogin: z.string().optional(),
   modality: z.string(),
   created: z.string(),
   givenName: z.string(),
