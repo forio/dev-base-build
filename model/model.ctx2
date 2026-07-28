@@ -1,4 +1,15 @@
 {
+  "variables": {
+    "Step": {
+      "save": true
+    },
+    "Time": {
+      "save": true
+    },
+    "Report_Profit": {
+      "save": true
+    }
+  },
   "protections": {
     "guards": [
       {

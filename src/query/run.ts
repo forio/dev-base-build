@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { Fault, runAdapter, SCOPE_BOUNDARY, UserSession } from 'epicenter-libs';
 import invariant from 'tiny-invariant';
 import * as z from 'zod';
-import { ModelVariablesSchema, ROLE_SCHEMAS } from '~/schemas/model';
+import { FacilitatorVariablesSchema, ROLE_SCHEMAS } from '~/schemas/model';
 import type { Role } from '~/schemas/world';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
@@ -73,7 +73,7 @@ const byEpisode = ({
   invariant(groupName, 'Reached authenticated route without session.groupName');
 
   const filter = ['run.hidden=false'];
-  const variableKeys = Object.keys(ModelVariablesSchema.shape);
+  const variableKeys = Object.keys(FacilitatorVariablesSchema.shape);
 
   return queryOptions({
     queryKey: ['run', 'per-episode', groupName, episode.name, filter, variableKeys],
@@ -88,7 +88,7 @@ const byEpisode = ({
         .then(
           (body) =>
             body.values as unknown as Array<
-              RunReadOutView<z.infer<typeof ModelVariablesSchema>>
+              RunReadOutView<z.infer<typeof FacilitatorVariablesSchema>>
             >
         ),
   });

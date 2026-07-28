@@ -43,12 +43,19 @@ export const ModelVariablesSchema = BaseVariablesSchema.extend({
   Fixed_Costs: numberArray,
 });
 
+export const FacilitatorVariablesSchema = BaseVariablesSchema.pick({
+  Time: true,
+  Step: true,
+  Report_Profit: true,
+});
+
 // Inferred types
 export type BaseVariables = z.infer<typeof BaseVariablesSchema>;
 export type SalesVariables = z.infer<typeof SalesVariablesSchema>;
 export type OperationsVariables = z.infer<typeof OperationsVariablesSchema>;
 export type FinanceVariables = z.infer<typeof FinanceVariablesSchema>;
 export type ModelVariables = z.infer<typeof ModelVariablesSchema>;
+export type FacilitatorVariables = z.infer<typeof FacilitatorVariablesSchema>;
 
 // Role-to-schema lookup
 export const ROLE_SCHEMAS = {
