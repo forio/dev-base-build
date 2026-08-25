@@ -1,14 +1,12 @@
-import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import invariant from 'tiny-invariant';
-import { Button } from '~/components/ui/button/button';
 import { useGuardedSession } from '~/query/auth';
 import { EpisodeQuery } from '~/query/episode';
 import { RunQuery } from '~/query/run';
 import styles from './index.module.scss';
 
 export const Route = () => {
-  const queryClient = useQueryClient();
   const session = useGuardedSession();
 
   const { data: currentEpisode } = useSuspenseQuery(EpisodeQuery.current({ session }));
@@ -33,20 +31,6 @@ export const Route = () => {
     RunQuery.byEpisode({ session, episode: selectedEpisode })
   );
 
-  const newEpisode = () =>
-    EpisodeQuery.push(session.groupName!).then(() =>
-      Promise.all([
-        queryClient.refetchQueries(EpisodeQuery.list({ session })),
-        queryClient.refetchQueries(EpisodeQuery.current({ session })),
-      ]).then(() => {
-        const current = queryClient.getQueryData(
-          EpisodeQuery.current({ session }).queryKey
-        );
-        invariant(current, 'Just created an episode but none found in cache');
-        setSelectedEpisodeKey(current.episodeKey);
-      })
-    );
-
   return (
     <div className={styles.root}>
       <div className={styles.selectEpisode}>
@@ -63,9 +47,6 @@ export const Route = () => {
             ))}
           </select>
         </label>
-        <Button size="sm" onClick={newEpisode}>
-          New Episode
-        </Button>
       </div>
     </div>
   );
