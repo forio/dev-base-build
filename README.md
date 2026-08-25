@@ -102,10 +102,10 @@ This is saved to `cli/config.json`, which you can edit later.
 
 ### Model files
 
-The model for this branch is `model/model.py`, a Python model with four variables:
-`signal`, `pitch`, `private_note`, and `ready`. Edit it directly if the model contract
-changes, then redeploy with `npm run deploy` (or `npm run deploy:model` for the model
-alone).
+The model for this branch is `model/model.xlsx`, an Excel model with four workbook-level
+named ranges: `signal`, `pitch`, `private_note`, and `ready`. Edit those named cells if the
+model contract changes, then redeploy with `npm run deploy` (or `npm run deploy:model` for
+the model alone).
 
 ### Set up a workshop and user accounts
 

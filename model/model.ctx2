@@ -1,5 +1,4 @@
 {
-  "language": "python3",
   "variables": {
     "signal": {
       "save": true

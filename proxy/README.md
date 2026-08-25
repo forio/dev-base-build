@@ -10,7 +10,7 @@ locked may read the *public* posture of every other desk in its episode, and not
 
 ## What this proxy does
 
-- Each team has one world run of `model.py` (`signal`, `pitch`, `private_note`, `ready`).
+- Each team has one world run of `model.xlsx` (`signal`, `pitch`, `private_note`, `ready`).
 - Participants use normal Epicenter permissions for full read/write access to their own
   world run. The player UI mutates all four variables on the team's own run.
 - After a team locks, the UI reads the **public projection** of every other world in the

@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 import { EpisodeReadOutView } from '~/types/episode';
 import { RunReadOutView } from '~/types/run';
 
-export const MODEL = 'model.py';
+export const MODEL = 'model.xlsx';
 
 const byWorld = ({ session, worldKey }: { session: UserSession; worldKey: string }) =>
   queryOptions({
