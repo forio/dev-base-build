@@ -39,9 +39,39 @@ at least two worlds.
 
 #### Proxy
 
-This branch deploys a proxy server, which requires an account enabled for project-scoped
-proxies. See [`proxy/README.md`](proxy/README.md) for that prerequisite and the details; it
-is set up as part of the deploy below.
+`npm run deploy` uploads and resets the proxy, but it does not configure the following
+Epicenter settings. Set them before the first deployment.
+
+1. **Set the organization shared secret (organization owners only).**
+
+   Open the organization that owns the project, then go to **Settings → General Settings**.
+   Expand **More Options** and, under **Account API Key**, select **Set Shared Secret Key**.
+   Enter a non-empty secret and select **Save** in the dialog.
+
+   Only organization Owners may set this secret. Changing an existing shared secret can
+   break other applications that rely on it.
+
+2. **Enable the project's proxy server.**
+
+   Open the project, then go to **Settings → General Settings** and expand **Advanced
+   Settings**. Under **Proxy Settings**:
+
+   - Set **Project Server** to **Proxy Server**.
+   - Set **Proxy Model Filename** to `index.js`.
+   - Select **Save Project Settings**.
+
+   Use `index.js`, not `index.ctx2`: `index.js` is the server entry point, while `index.ctx2`
+   supplies its runtime configuration.
+
+Project-scoped proxies require a team organization, a team project, and an eligible plan or
+an account specifically enabled by Forio. If the account is not enabled, the **Proxy
+Settings** section may show this message instead of the server controls:
+
+> Looking for proxy and/or Node.js server configuration? Your account is not yet configured
+> to allow project-scoped models. Please contact support@forio.com to enable this feature.
+
+Contact Forio before continuing if you see that message. See
+[`proxy/README.md`](proxy/README.md) for how the proxy works and how to develop it locally.
 
 ### Deploy project files to Epicenter
 

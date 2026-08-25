@@ -2,8 +2,8 @@
 
 This directory is an Epicenter **project-scoped proxy** — a small Express server deployed
 alongside the simulation and reachable at `/proxy/<account>/<project>/…`. It holds the
-project's privileged secret server-side and re-exports a few tightly-scoped capabilities to
-the client.
+account's shared secret server-side and re-exports a few tightly-scoped capabilities to the
+client.
 
 In this example the proxy implements the market-signal **public carveout**: a desk that has
 locked may read the *public* posture of every other desk in its episode, and nothing more.
@@ -134,11 +134,12 @@ A proxy earns its place when a capability genuinely cannot be expressed within t
 
 ## Prerequisite: project-scoped proxies
 
-The proxy runs only if the owning account has the `allowProjectScopedModels` setting enabled
-(this requires a TEAM account and TEAM project). It is an account-level setting that may not
-be settable by all users; if it is off, contact a Forio representative to enable it. With it
-enabled, no further project setting is required — the proxy is recognized by this `proxy/`
-directory and its `index.ctx2`, and `model.py` remains the project's simulation model.
+The proxy requires a team organization, a team project, and an eligible plan or an account
+specifically enabled by Forio. Follow the Dashboard setup in the root
+[`README.md`](../README.md#proxy) to set the organization shared secret and configure the
+project's **Project Server** and **Proxy Model Filename**. If **Proxy Settings** displays a
+message that the account is not configured for project-scoped models instead of showing the
+server controls, contact Forio before continuing.
 
 ## Deploying and resetting
 
@@ -163,8 +164,8 @@ npm run reset:proxy
 
 Developing the proxy itself locally is an advanced path. For general sim development, use the
 deployed proxy; run a local Express server only when the proxy is the focus of the change.
-Locally, `index.js` reads connection details and the project secret from a `proxy/env.json`
-file (git-ignored) instead of the values Epicenter injects in production.
+Locally, `index.js` reads connection details and the account shared secret from a
+`proxy/env.json` file (git-ignored) instead of the values Epicenter injects in production.
 
 For local proxy development, create `proxy/env.json` with the Epicenter connection fields
 the fallback reads:
@@ -174,7 +175,7 @@ the fallback reads:
   "API_HOST": "forio.com",
   "ACCOUNT_SHORT_NAME": "your-account",
   "PROJECT_SHORT_NAME": "your-project",
-  "API_SHARED_SECRET": "your-project-shared-secret",
+  "API_SHARED_SECRET": "your-account-shared-secret",
   "OPENAI_API_KEY": "sk-..."
 }
 ```
