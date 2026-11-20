@@ -31,18 +31,6 @@ if (config.isLocal()) {
   config.apiHost = import.meta.env.VITE_DEV_API_HOST;
 }
 
-errorManager.clearHandlers();
-errorManager.registerHandler(
-  (error) => error.code === 'COMETD_RECONNECTED',
-  async (_error) => console.warn('PUSH_RECONNECTED')
-);
-
-errorManager.registerHandler(matchAttemptRegenerate, (error, retry) => {
-  const awaitingLogout = store.get(awaitingLogoutAtom);
-  if (awaitingLogout) throw error;
-  return regenerateSession().then(retry);
-});
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -55,6 +43,36 @@ const queryClient = new QueryClient({
       },
     },
   },
+});
+
+errorManager.clearHandlers();
+
+/**
+ * Push is a hint, not the source of truth: epicenter-libs restores subscriptions
+ * after a reconnect or re-handshake, but does not replay messages sent while the
+ * connection was down. Refetch so the UI catches up on anything it missed.
+ *
+ * The library raises `COMETD_RECONNECTED` on every not-connected -> connected
+ * transition, including the very first connect (queries are fresh then, so skip
+ * it) and the reconnect after `regenerateSession`.
+ */
+let hasConnectedBefore = false;
+errorManager.registerHandler(
+  (error) => error.code === 'COMETD_RECONNECTED',
+  async (_error) => {
+    if (!hasConnectedBefore) {
+      hasConnectedBefore = true;
+      return;
+    }
+    console.warn('PUSH_RECONNECTED: refetching active queries');
+    await queryClient.invalidateQueries();
+  }
+);
+
+errorManager.registerHandler(matchAttemptRegenerate, (error, retry) => {
+  const awaitingLogout = store.get(awaitingLogoutAtom);
+  if (awaitingLogout) throw error;
+  return regenerateSession().then(retry);
 });
 
 const resolveInitialRoleHome = () => {
