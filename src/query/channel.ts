@@ -1,8 +1,8 @@
-import { Channel, GenericScope } from 'epicenter-libs';
+import { Channel, ChannelMessage, GenericScope, PUSH_CATEGORY } from 'epicenter-libs';
 import { useEffect, useMemo, useRef } from 'react';
 
 type ChannelScope = GenericScope & {
-  pushCategory: string;
+  pushCategory: keyof typeof PUSH_CATEGORY;
 };
 
 export const useChannel = ({
@@ -41,7 +41,8 @@ export const useChannelEffect = <M>({
 
     const subscribe = async () => {
       try {
-        await channel.subscribe(callback);
+        // The library types the payload as ChannelMessage<D>; callers type the full push message
+        await channel.subscribe(callback as (data: ChannelMessage) => void);
       } catch (error) {
         console.error(`Channel subscribe failed for ${channel.path}`, error);
       }
