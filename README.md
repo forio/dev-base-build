@@ -209,22 +209,6 @@ useChannelEffect({
    versions could drop the new session on that race, leaving a user with no session or
    dead channels until they refreshed.
 
-#### Testing push resilience
-
-These cases are worth checking after changing session or channel code. They come from
-testing a production simulation (Root Beer Game) built on the same libraries:
-
-- **Failed regeneration** – make `PATCH /authentication` return an error (for example
-  with a Playwright `route`) while a push triggers `regenerateSession()`. The template sets
-  `awaitingLogoutAtom` (so it stops retrying) and rethrows; it does not log the user out
-  on its own. With `epicenter-libs` 3.35+ the failed PATCH happens before anything is
-  disconnected, so existing subscriptions should keep receiving pushes.
-- **Socket closing during disconnect** – close the WebSocket at the moment the client
-  sends `/meta/disconnect`. Regenerate and logout must still succeed.
-- **Reconnect** – close the WebSocket and confirm the `PUSH_RECONNECTED` handler refetches.
-- **Logout, then log in to another group** (without reloading the page) – pushes for the
-  new group must arrive.
-
 ### Extending the UI component system (`components/ui/`)
 
 - **CSS Modules** – local, hashed class names.
