@@ -17,6 +17,7 @@ class‑variance‑authority (`cva`)**.
 4. [Architecture overview](#architecture-overview) • [Routing & guards](#routing--guards)
    • [Authentication flow](#authentication-flow) •
    [Data‑fetching conventions (`query/`)](#data-fetching-conventions-query) •
+   [Push channels (`query/channel.ts`)](#push-channels-querychannelts) •
    [Extending the UI component system (`components/ui/`)](#extending-the-ui-component-system-componentsui)
 5. [Internationalization (i18n)](#internationalization-i18n)
 
@@ -158,6 +159,71 @@ const current = ({ session }: { session: UserSession }) =>
 > When you pass this object to `useQuery(EpisodeQuery.current({ session }))` the key is
 > guaranteed to change whenever **`session.groupName`** does, which forces a refetch
 > instead of leaking data across groups.
+
+### Push channels (`query/channel.ts`)
+
+Real‑time updates arrive over Epicenter push channels (CometD) via the `Channel` class
+from `epicenter-libs`. Two hooks wrap it:
+
+- **`useChannel({ scopeBoundary, scopeKey, pushCategory })`** – returns a memoized
+  `Channel` for that scope, or `undefined` until every part of the scope is known.
+- **`useChannelEffect({ token, channel, callback })`** – subscribes when the component
+  mounts and unsubscribes when it unmounts or when `channel`, `callback`, or `token`
+  changes. Subscribes and unsubscribes are serialized through a queue so the newest
+  subscription always wins, and errors are caught and logged so one failed subscribe
+  cannot block the ones after it.
+
+```tsx
+const groupChannel = useChannel({
+  scopeBoundary: SCOPE_BOUNDARY.GROUP,
+  scopeKey: session.groupKey,
+  pushCategory: PUSH_CATEGORY.GROUP,
+});
+
+useChannelEffect({
+  token: session.token, // re-subscribe after the session is regenerated
+  channel: groupChannel,
+  callback: onGroupChannelPush, // keep it stable with useCallback
+});
+```
+
+#### Guidelines
+
+1. **Do not cache channels or listeners outside React.** Derive the `Channel` from the
+   current scope, and pass `session.token` as the effect dependency. Logging out and then
+   into another group changes the scope and token, so fresh subscriptions are made; a
+   module‑level cache would keep delivering to the old group until a page refresh.
+2. **Treat push as a hint, not the source of truth.** On a push, invalidate the
+   affected queries (as `PlayerShell` does for episodes) rather than patching state from
+   the message. Messages are not replayed for the time a connection was down, and a push
+   can occasionally never arrive, so every push‑driven view must be refetchable.
+3. **Refetch on reconnect.** `main.tsx` registers an `errorManager` handler for
+   `COMETD_RECONNECTED` that invalidates all active queries. The library raises that code
+   on every not‑connected → connected transition, so the handler skips the first one
+   (the initial connect, when queries are already fresh) and runs on later reconnects,
+   including the one after `regenerateSession()`.
+4. **Use `epicenter-libs` 3.35 or later.** From 3.35 the library restores subscriptions
+   after a re‑handshake, treats a failed CometD disconnect as best‑effort (so
+   `regenerate()` and `logout()` do not fail or lose the session when the socket closes
+   before the disconnect reply), and resolves `unsubscribe` after a disconnect. Earlier
+   versions could drop the new session on that race, leaving a user with no session or
+   dead channels until they refreshed.
+
+#### Testing push resilience
+
+These cases are worth checking after changing session or channel code. They come from
+testing a production simulation (Root Beer Game) built on the same libraries:
+
+- **Failed regeneration** – make `PATCH /authentication` return an error (for example
+  with a Playwright `route`) while a push triggers `regenerateSession()`. The template sets
+  `awaitingLogoutAtom` (so it stops retrying) and rethrows; it does not log the user out
+  on its own. With `epicenter-libs` 3.35+ the failed PATCH happens before anything is
+  disconnected, so existing subscriptions should keep receiving pushes.
+- **Socket closing during disconnect** – close the WebSocket at the moment the client
+  sends `/meta/disconnect`. Regenerate and logout must still succeed.
+- **Reconnect** – close the WebSocket and confirm the `PUSH_RECONNECTED` handler refetches.
+- **Logout, then log in to another group** (without reloading the page) – pushes for the
+  new group must arrive.
 
 ### Extending the UI component system (`components/ui/`)
 
